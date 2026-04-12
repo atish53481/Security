@@ -94,7 +94,7 @@ This arise Signature of JWT is not verified properly and attacker can generate a
 #JWT Authentication bypass via unverified signature
 
 
-Server don't store the JWT because this there is less possible is who is actual user? If don't verified the signature properly then nothing one can stop from attacking
+**if Server don't store the JWT because this there is less possible is who is actual user? If don't verified the signature properly then nothing one can stop from attacking**
 Eg:
 JWT containing the following claims: 
 { "username": "carlos", "isAdmin": false }
@@ -123,6 +123,96 @@ JWTs can be signed using a range of different algorithms, but can also be left u
 
 Takeway:
     1. Select the header of the JWT, **then use the Inspector to change the value of the alg parameter to none.** Click Apply changes. 
+
+    What are “filters” here?
+
+Some servers try to block unsafe JWTs like this:
+
+If alg == "none" → reject token
+
+This is a simple string check (a “filter”).
+
+👉 Problem: it only looks for the exact text "none".
+
+😈 What are “obfuscation techniques”?
+
+Obfuscation = hiding or disguising something so it still works, but looks different.
+
+Attackers tweak the value so:
+
+The filter doesn’t recognize it
+But the JWT library still understands it as none
+🧠 Why does this work?
+
+Because:
+
+The filter = simple string comparison (weak)
+The JWT parser/library = more flexible (stronger, normalizes input)
+
+👉 So they interpret the same value differently
+
+⚡ Examples of Obfuscation
+1. Mixed Capitalization
+
+Instead of:
+
+"alg": "none"
+
+Try:
+
+"alg": "None"
+"alg": "NONE"
+"alg": "nOnE"
+
+👉 Filter may miss it
+👉 Library may treat it as none
+
+2. Unexpected Encodings
+Unicode encoding:
+"alg": "\u006e\u006f\u006e\u0065"
+
+👉 This decodes to "none"
+
+Filter sees weird string → allows it
+Parser decodes → sees "none"
+3. Extra Characters / Whitespace
+"alg": " none"
+"alg": "none "
+
+👉 If filter doesn’t trim spaces → bypass
+
+4. JSON Tricks (less common but real)
+"alg": "no" + "ne"
+
+(Some parsers normalize this depending on implementation)
+
+🔥 Real-World Idea
+
+Think of it like:
+
+Security guard checks:
+👉 “Is your name exactly ‘John’?”
+Attacker says:
+👉 “JOHN” or “ John ”
+
+Guard says: “Looks different, go ahead.”
+
+But the system inside says:
+👉 “Yeah, that’s John.”
+
+💡 One-Line Meaning
+
+“Classic obfuscation techniques” means modifying input (like none) in sneaky ways so security checks fail, but the backend still understands it.
+
+🧪 In Your JWT Lab Context
+
+You try:
+
+"alg": "none" → blocked ❌
+"alg": "None" → maybe works ✅
+"alg": "\u006e\u006f\u006e\u0065" → bypass ✅
+
+👉 That’s exactly what the sentence is referring to.
     
     
     
@@ -317,9 +407,25 @@ secret = "mysecret"
 
 👉 Uses:
 
-jku ✅
-jwk ✅
-kid ✅
+(JSON Web key Set URL) jku ✅
+(JSON Web key) jwk ✅
+(Key ID) kid ✅ -Server used key for verification
+
+Simple Example
+JWT header:
+{
+  "alg": "RS256",
+  "kid": "key1"
+}
+Server key store:
+key1 → public_key_1.pem
+key2 → public_key_2.pem
+
+👉 Server uses key1 to verify signature
+
+⚠️ Why kid is important in security testing
+
+Because:
 Why?
 
 Because server needs public key to verify
@@ -2675,6 +2781,7 @@ I can give you:
 
 Just say: **“give test cases”** or **“burp practice”** 🔥
 
+## SSRF via jku parameter
 The URL specification contains a number of features that are likely to be overlooked when URLs implement ad-hoc parsing and validation using this method:
 
     You can embed credentials in a URL before the hostname, using the @ character. For example:
@@ -2690,6 +2797,7 @@ The URL specification contains a number of features that are likely to be overlo
 
 Great—this is exactly how jku attacks become real bypasses in apps. I’ll connect your theory with the earlier jku injection flow so it becomes crystal clear 👇
 
+## SSRF via jku parameter
 🔐 First: What the app is trying to do
 
 In a jku scenario (from above):
@@ -2824,7 +2932,8 @@ I can give:
 ✅ Burp Suite hands-on practice steps
 ✅ Combine with SSRF testing
 
-
+# Injecting self-signed JWTs via the kid parameter
+this attack possible with HS256
 
 *Injecting self-signed JWTs via the kid parameter*
 *Servers may use several cryptographic keys for signing different kinds of data, not just JWTs. For this reason, the header of a JWT may contain a kid (Key ID) parameter, which helps the server identify which key to use when verifying the signature.*

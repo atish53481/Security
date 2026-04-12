@@ -1,4 +1,5 @@
-has cat
+hash cat
+to get secret key
 
 ![alt text](image.png)
 
