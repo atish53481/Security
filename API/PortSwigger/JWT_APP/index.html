@@ -2110,6 +2110,10 @@
 
                 const jwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
                 
+                // Burp Suite compatibility: Explicitly add alg and kid
+                jwk.alg = 'RS256';
+                jwk.kid = window.crypto.randomUUID ? window.crypto.randomUUID() : Math.random().toString(36).substring(2);
+                
                 currentRSAKey = {
                     publicKey: keyPair.publicKey,
                     privateKey: keyPair.privateKey,
