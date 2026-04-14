@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  font-family: 'JetBrains Mono', monospace; /* Total mono aesthetic */
+  color-scheme: dark;
+  background-color: #000;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #000;
+  color: #c9d1d9;
+}
+
+#root {
+  width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom Scrollbar, sharp edges */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 0; /* Sharp corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Inputs refinement */
+input {
+  border-radius: 0 !important; /* Force sharp inputs */
+}
+input::placeholder {
+  color: #52525b;
+}
+
+/* Base button and border sharpness */
+button {
+  border-radius: 0 !important;
+}
+
+.border {
+  border-radius: 0 !important;
+}
