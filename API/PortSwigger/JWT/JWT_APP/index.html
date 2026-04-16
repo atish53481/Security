@@ -1782,13 +1782,21 @@
         // ========== HMAC-SHA256 (Web Crypto API) ==========
         async function hmacSha256Sign(message, secret) {
             const encoder = new TextEncoder();
-            const keyData = encoder.encode(secret);
+            let keyData = encoder.encode(secret);
+            
+            // Web Crypto API in browsers throws a DataError for 0-length keys
+            // However, by definition, HMAC pads keys with zeros up to the block size (64 bytes for SHA256).
+            // A 64-byte array of 0s produces the exact same mathematical signature as a 0-byte key!
+            if (keyData.length === 0) {
+                keyData = new Uint8Array(64); 
+            }
+            
             const msgData = encoder.encode(message);
 
-            const key = await crypto.subtle.importKey(
+            const key = await window.crypto.subtle.importKey(
                 'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
             );
-            const sig = await crypto.subtle.sign('HMAC', key, msgData);
+            const sig = await window.crypto.subtle.sign('HMAC', key, msgData);
             const bytes = new Uint8Array(sig);
             let binary = '';
             bytes.forEach(b => binary += String.fromCharCode(b));
@@ -2015,7 +2023,6 @@
             <div class="attack-card" id="card-${a.id}" onclick="selectAttack('${a.id}')">
                 <div class="card-top">
                     <span class="card-difficulty difficulty-${a.difficulty}">${a.difficulty}</span>
-                    <span class="card-status status-${a.status === 'solved' ? 'solved' : 'unsolved'}">${a.status === 'solved' ? '✅ Solved' : '🔓 Not solved'}</span>
                 </div>
                 <div class="card-number">${a.num}</div>
                 <div class="card-title">${a.subtitle}</div>
@@ -2837,7 +2844,13 @@
 
                 case 'kid_traversal': {
                     const kidPath = getVal('kid_path');
-                    const secret = getVal('signing_secret');
+                    let secret = getVal('signing_secret');
+                    
+                    // Handle users literally typing '' or "" in the input box expecting empty string
+                    if (secret === "''" || secret === '""') {
+                        secret = '';
+                    }
+
                     modifiedHeader.alg = 'HS256';
                     modifiedHeader.kid = kidPath;
                     applyPayloadChanges();
@@ -2893,10 +2906,17 @@
 
                     if (jwt2.trim()) {
                         resultToken = `${headerB64}.${payloadB64}.<USE_DERIVED_KEY_TO_SIGN>`;
-                        notes.push('Step 1: Run rsa_sign2n to derive the public key:');
-                        notes.push(`docker run --rm -it portswigger/sig2n ${token} ${jwt2.trim()}`);
-                        notes.push('Step 2: The tool outputs tampered tokens — try each one');
-                        notes.push('Step 3: Once working key found, use it in Burp JWT Editor as symmetric key');
+                        
+                        const dockerCmd = `docker run --rm -it portswigger/sig2n ${token} ${jwt2.trim()}`;
+                        notes.push('<strong style="color: var(--accent-green);">Step 1: Run rsa_sign2n to derive the public key.</strong>');
+                        
+                        notes.push(`<div style="display:flex; align-items:center; gap:10px; margin: 12px 0; width: 100%;">
+                            <code style="background:var(--bg-primary); padding:10px 14px; border-radius:6px; flex:1; overflow-x: auto; white-space: nowrap; border: 1px solid var(--border-glass); font-size: 13px;">${dockerCmd}</code>
+                            <button onclick="navigator.clipboard.writeText('${dockerCmd}'); showToast('✅ Command copied to clipboard!');" style="padding: 10px 18px; background: var(--accent-primary); border:none; color:white; border-radius:6px; cursor:pointer; font-weight:600; font-family:var(--font-sans); box-shadow: 0 4px 12px var(--accent-glow); white-space: nowrap; transition: all 0.2s ease;">📋 Copy Command</button>
+                        </div>`);
+                        
+                        notes.push('<strong style="color: var(--accent-cyan);">Step 2: Please go to your terminal, paste the copied command, and execute it.</strong>');
+                        notes.push('<strong>Step 3: Copy the tampered JWT token directly from the terminal output and use it in your HTTP request.</strong>');
                     } else {
                         resultToken = `${headerB64}.${payloadB64}.<NEED_TWO_TOKENS_TO_DERIVE_KEY>`;
                         notes.push('⚠️ You need two JWT tokens signed by the same key');
