@@ -61,7 +61,7 @@ The tool provides dedicated logic and step-by-step instructions for:
 
 This tool was created for security researchers and students practicing in authorized environments like the PortSwigger Web Security Academy. 
 - **DO NOT** use this tool for unauthorized access to systems you do not own.
-- The authors are not responsible for any misuse or legal consequences of using this software.
+- The authors are not responsible for any misuse or legal consequences of using this software
 
 ---
 
