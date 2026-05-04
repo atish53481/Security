@@ -103,6 +103,33 @@ location = 'http://localhost:3000/lab/custom-tags?search=%3Cxss+id%3Dx+onfocus%3
                 </li>
             </ol>
         `
+    },
+    {
+        id: 4,
+        name: "Reflected XSS with some SVG markup allowed",
+        difficulty: "PRACTITIONER",
+        difficultyClass: "practitioner",
+        description: "This lab has a simple reflected XSS vulnerability. The site is blocking common tags but misses some SVG tags and events.",
+        intro: "A permitted &lt;svg&gt; tag plus an SVG animation attribute (onbegin) can bypass naive WAFs and deliver reflected XSS.",
+        learning: "Learn how to use SVG tags like &lt;animatetransform&gt; and SVG-specific events like onbegin to execute JavaScript when standard HTML tags are blocked.",
+        payload: "<svg><animatetransform onbegin=alert(1)></svg>",
+        solution: "Use Burp Intruder (or the built-in simulator) to find allowed tags. We find &lt;svg&gt; and &lt;animatetransform&gt; are allowed. Then brute-force events to find onbegin. Construct the final payload to trigger an alert.",
+        url: "/lab/svg-xss",
+        full_description: `
+            <p>This lab has a simple reflected XSS vulnerability. The site is blocking common tags but misses some SVG tags and events.</p>
+            <p>To solve the lab, perform a cross-site scripting attack that calls the <code>alert()</code> function.</p>
+            
+            <h3>Detailed Solution - Step by Step</h3>
+            <ol>
+                <li>Inject a standard XSS payload, such as: <code>&lt;img src=1 onerror=alert(1)&gt;</code>. Observe that this payload gets blocked.</li>
+                <li>In the next few steps, we'll use Burp Intruder (or the Simulated Intruder below) to test which tags and attributes are being blocked.</li>
+                <li>In the Intruder, run the attack with a list of common HTML tags. Observe that all payloads caused a 400 response, except for the ones using the <code>&lt;svg&gt;</code>, <code>&lt;animatetransform&gt;</code>, <code>&lt;title&gt;</code>, and <code>&lt;image&gt;</code> tags, which received a 200 response.</li>
+                <li>Now test attributes inside an allowed tag, like <code>&lt;svg&gt;&lt;animatetransform §§=1&gt;</code>.</li>
+                <li>Run the attack with a list of event handlers. Note that all payloads caused a 400 response, except for the <code>onbegin</code> payload, which caused a 200 response.</li>
+                <li>Combine these to construct the final payload: <code>&lt;svg&gt;&lt;animatetransform onbegin=alert(1)&gt;</code>.</li>
+                <li>Submit the payload in the search box to trigger the alert and solve the lab.</li>
+            </ol>
+        `
     }
 ];
 
@@ -729,6 +756,174 @@ app.get('/lab/custom-tags', (req, res) => {
             </div>
             <div class="solution-sidebar">
                 ${labs[2].full_description}
+            </div>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+// LAB 4: SVG XSS
+app.get('/lab/svg-xss', (req, res) => {
+    res.setHeader('X-XSS-Protection', '0');
+    const s = req.query.search || '';
+    
+    // WAF Logic for Lab 4
+    const allowedTags = ['svg', 'animatetransform', 'title', 'image'];
+    const allowedAttributes = ['onbegin', 'attributename', 'type', 'from', 'to', 'dur']; // basic animation attributes
+
+    let err = null;
+    const tagMatch = s.match(/<([a-zA-Z0-9-]+)/g);
+    if (tagMatch) {
+        for (let t of tagMatch) {
+            let n = t.substring(1).toLowerCase();
+            if (!allowedTags.includes(n)) { err = `Tag <${n}> is not allowed`; break; }
+        }
+    }
+    const attrMatch = s.match(/([a-zA-Z0-9]+)\s*=/g);
+    if (attrMatch && !err) {
+        for (let a of attrMatch) {
+            let n = a.split('=')[0].trim().toLowerCase();
+            if (!allowedAttributes.includes(n)) { err = `Event/Attribute ${n} is not allowed`; break; }
+        }
+    }
+
+    if (err) {
+        return res.status(400).send(`
+            <div style="font-family: sans-serif; padding: 20px;">
+                <h1 style="font-size: 32px; font-weight: bold;">Client Error: Forbidden</h1>
+                <p>${err}</p>
+            </div>
+        `);
+    }
+
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Lab 4 - SVG Tags</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f0f2f5; }
+            .nav-bar { background: #37475a; color: white; padding: 10px 20px; font-size: 14px; border-bottom: 3px solid #ff6600; }
+            .split-container { display: flex; max-width: 1600px; margin: 0 auto; gap: 30px; padding: 20px; align-items: flex-start; }
+            .lab-panel { flex: 1; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+            .solution-sidebar { width: 450px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 20px; }
+            input[type="text"] { width: 70%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+            button { padding: 12px 24px; background-color: #ff6600; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+            .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+            .badge-allowed { background: #d4edda; color: #155724; }
+            .badge-blocked { background: #f8d7da; color: #721c24; }
+        </style>
+    </head>
+    <body>
+        <div class="nav-bar">
+            <span>Reflected XSS with some SVG markup allowed</span>
+        </div>
+        <div class="container" style="text-align:left; border-radius:0; box-shadow:none; border-bottom:1px solid #ccc; padding: 10px 30px; background: #fff;">
+            <div style="display:flex; align-items:center; gap:20px;">
+                <a href="/" style="color:#ff6600; text-decoration:none; font-weight:bold; font-size:20px;">🏠 Home</a>
+                <div style="height:20px; border-left:1px solid #ccc;"></div>
+                <a href="/exploit-editor" style="background:#ff6600; color:white; padding:10px 20px; text-decoration:none; font-weight:bold; border-radius:2px;">Go to exploit server</a>
+            </div>
+        </div>
+
+        <div class="split-container">
+            <div class="lab-panel">
+                <h2 style="color:#ff6600; margin-top:0;">Lab: Reflected XSS with some SVG markup allowed</h2>
+                <p style="background:#eef2f5;padding:15px;border-left:5px solid #ff6600;">Inject a payload using an allowed SVG tag and event to alert(1).</p>
+                <form action="/lab/svg-xss" method="GET">
+                    <input type="text" name="search" placeholder="Search..." value="${s.replace(/"/g, '&quot;')}">
+                    <button type="submit">Search</button>
+                </form>
+
+                ${s ? `
+                    <div style="margin-top:20px;">
+                        <section class="blog-header" style="padding: 20px 0; border-bottom: 1px solid #eee;">
+                            <h1 style="font-weight: normal; margin: 0; color: #333; font-size: 28px;">
+                                0 search results for '${s}'
+                            </h1>
+                            <hr style="margin-top: 20px; border: 0; border-top: 1px solid #eee;">
+                        </section>
+                        
+                        <div style="margin-top: 30px; border: 1px solid #333; border-radius: 4px; overflow: hidden; font-family: monospace; font-size: 13px; background: #282c34; color: #abb2bf; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                            <div style="background: #21252b; padding: 8px 15px; border-bottom: 1px solid #181a1f; color: #d7dae0; display: flex; align-items: center; gap: 10px; font-weight: bold;">
+                                <span>🔍 DOM Inspector</span>
+                            </div>
+                            <div style="padding: 15px; line-height: 1.5; white-space: pre; overflow-x: auto;">
+<span style="color: #e06c75;">&lt;section</span> <span style="color: #d19a66;">class</span>=<span style="color: #98c379;">"blog-header"</span><span style="color: #e06c75;">&gt;</span>
+    <span style="color: #e06c75;">&lt;h1&gt;</span>
+        0 search results for '
+        <span style="background: rgba(255,255,255,0.1); padding: 2px; border-radius: 2px;">${s.replace(/</g, '&lt;')}</span>'
+    <span style="color: #e06c75;">&lt;/h1&gt;</span>
+    <span style="color: #e06c75;">&lt;hr&gt;</span>
+<span style="color: #e06c75;">&lt;/section&gt;</span></div>
+                        </div>
+                    </div>
+                ` : ''}
+            <div class="intruder">
+                <h3>🛠️ Simulated Intruder</h3>
+                <button onclick="start()" id="btn" style="background:#2c3e50;color:white;border:none;padding:10px;cursor:pointer;">Start Attack</button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:15px;text-align:left;">
+                    <div class="list" style="height:120px; overflow-y:scroll; background:#f8f9fa; border:1px solid #ddd; padding:10px; font-family:monospace; font-size:12px; color:#666;" id="tags">script, div, p, h1, h2, span, img, body, html, iframe, a, button, input, xss, svg, animatetransform, title, image, custom-tag</div>
+                    <div class="list" style="height:120px; overflow-y:scroll; background:#f8f9fa; border:1px solid #ddd; padding:10px; font-family:monospace; font-size:12px; color:#666;" id="events">onclick, onmouseover, onerror, onload, onfocus, onblur, onchange, onsubmit, onbegin, tabindex, id</div>
+                </div>
+                <table id="tbl" style="display:none; width:100%; border-collapse:collapse; margin-top:20px; border:1px solid #ddd; font-size:14px;">
+                    <thead>
+                        <tr>
+                            <th style="background:#f2f2f2;padding:12px;border:1px solid #ddd;text-align:left;">Payload</th>
+                            <th style="background:#f2f2f2;padding:12px;border:1px solid #ddd;text-align:left;">Status Code</th>
+                            <th style="background:#f2f2f2;padding:12px;border:1px solid #ddd;text-align:left;">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="res"></tbody>
+                </table>
+                <div id="recommended-payload" style="display:none;margin-top:25px;padding:20px;background:#e7f3ff;border:1px solid #b8daff;border-radius:8px;text-align:left;">
+                    <h4 style="margin-top:0;color:#004085;">🎯 Identified Exploit Pattern</h4>
+                    <p>The intruder found that SVG tags like <code>&lt;svg&gt;</code> and <code>&lt;animatetransform&gt;</code> are allowed, along with the <code>onbegin</code> event!</p>
+                    <div style="background:#fff;padding:10px;border:1px solid #ddd;border-radius:4px;font-family:monospace;font-size:16px;color:#d63384;">
+                        <code id="payload-code">&lt;svg&gt;&lt;animatetransform onbegin=alert(1)&gt;</code>
+                    </div>
+                </div>
+            </div>
+            <script>
+                async function start() {
+                    const btn = document.getElementById('btn');
+                    const resBody = document.getElementById('res');
+                    const tbl = document.getElementById('tbl');
+                    
+                    btn.disabled = true;
+                    btn.innerText = '🚀 Attacking...';
+                    tbl.style.display = "table";
+                    resBody.innerHTML = '';
+
+                    const tags = document.getElementById('tags').innerText.split(',').map(x => '<' + x.trim() + '>');
+                    const events = document.getElementById('events').innerText.split(',').map(x => '<svg><animatetransform ' + x.trim() + '=1>');
+                    const payloads = tags.concat(events);
+
+                    for (let p of payloads) {
+                        const response = await fetch('/lab/svg-xss?search=' + encodeURIComponent(p));
+                        const status = response.status;
+                        const label = (status === 200 ? 'Allowed' : 'Blocked');
+                        const bClass = (status === 200 ? 'badge-allowed' : 'badge-blocked');
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td><code>' + p.replace(/</g, '&lt;') + '</code></td>' +
+                                        '<td style="color:' + (status === 200 ? '#28a745' : '#dc3545') + '">' + status + '</td>' +
+                                        '<td><span class="badge ' + bClass + '">' + label + '</span></td>';
+                        resBody.appendChild(row);
+                        await new Promise(r => setTimeout(r, 10));
+                    }
+
+                    btn.disabled = false;
+                    btn.innerText = '✅ Attack Finished';
+                    btn.style.background = '#28a745';
+                    document.getElementById('recommended-payload').style.display = 'block';
+                }
+            </script>
+            </div>
+            <div class="solution-sidebar">
+                ${labs[3].full_description}
             </div>
         </div>
     </body>
